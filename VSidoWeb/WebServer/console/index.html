@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html>
+    <meta charset="utf8">
+  <head>
+    <title>VSido Web App Sample</title>
+    <!-- Viewport mobile tag for sensible mobile support -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<!--meta name="viewport" content="user-scalable=no"-->
+
+    <!--STYLES-->
+    <link rel="stylesheet" href="/styles/importer.css">
+    <link rel="stylesheet" href="/styles/jquery.mobile-1.4.5.min.css">
+    <link rel="stylesheet" href="/styles/vsido.connection.css">
+    <link rel="stylesheet" href="/styles/vsido.hand.css">
+    <link rel="stylesheet" href="/styles/vsido.layout.css">
+    <link rel="stylesheet" href="/styles/vsido.walk.css">
+    <!--STYLES END-->
+    
+	<!--SCRIPTS-->
+<script src="/js/jquery-2.1.1.min.js"></script>
+<script src="/js/jquery.mobile-1.4.5.min.js"></script>
+<script src="/js/vsido.camera.js"></script>
+<script src="/js/vsido.canvas.acceleration.js"></script>
+<script src="/js/vsido.canvas.hand.js"></script>
+<script src="/js/vsido.canvas.joystick.js"></script>
+<script src="/js/vsido.canvas.js"></script>
+<script src="/js/vsido.canvas.sensorstick.js"></script>
+<script src="/js/vsido.web.js"></script>
+<!--SCRIPTS END-->
+	
+	
+  </head>
+
+  <body>
+    <a href="/" target="_self">トップに戻る</a>
+
+    <script type="text/javascript">
+	var vsido = new VSidoWeb();
+	$(function(){
+		$('#vsido_raw_send').click(function(){
+			var raw = vsido.execRaw();
+			$("#vsido_output_request").text('send:<'+JSON.stringify(raw)+'>');
+			console.log($('#vsido_raw_console').val());
+			console.log(typeof($('#vsido_raw_console').val()));
+			var bytes = $('#vsido_raw_console').val().split(',');
+			console.log(bytes);
+			bytes.forEach(function(byte){
+				console.log(byte);
+				raw['exec'].push(parseInt(byte,16));
+			});
+			vsido.send(raw);
+		});
+	});
+</script>
+
+<div>
+<textarea name="console" id="vsido_raw_console" rows="4" cols="100">
+0xff,0x22,0x4,0x55
+</textarea>
+<input type="submit" id="vsido_raw_send" value="送信">
+</div>
+
+
+   <div id="vsido_div_top">
+     <label>要求<label/>
+     <div id="vsido_output_request"></div>
+     <label>返事<label/>
+     <div id="vsido_output_response"></div>
+   </div>
+	
+  </body>
+</html>

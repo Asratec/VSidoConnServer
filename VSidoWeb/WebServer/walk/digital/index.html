@@ -1,0 +1,227 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf8">
+    <title>VSido Web App Sample</title>
+    <!-- Viewport mobile tag for sensible mobile support -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<!--meta name="viewport" content="user-scalable=no"-->
+
+    <!--STYLES-->
+    <link rel="stylesheet" href="/styles/importer.css">
+    <link rel="stylesheet" href="/styles/jquery.mobile-1.4.5.min.css">
+    <link rel="stylesheet" href="/styles/vsido.connection.css">
+    <link rel="stylesheet" href="/styles/vsido.hand.css">
+    <link rel="stylesheet" href="/styles/vsido.layout.css">
+    <link rel="stylesheet" href="/styles/vsido.walk.css">
+    <!--STYLES END-->
+    
+	<!--SCRIPTS-->
+<script src="/js/jquery-2.1.1.min.js"></script>
+<script src="/js/jquery.mobile-1.4.5.min.js"></script>
+<script src="/js/vsido.camera.js"></script>
+<script src="/js/vsido.canvas.acceleration.js"></script>
+<script src="/js/vsido.canvas.hand.js"></script>
+<script src="/js/vsido.canvas.joystick.js"></script>
+<script src="/js/vsido.canvas.js"></script>
+<script src="/js/vsido.canvas.sensorstick.js"></script>
+<script src="/js/vsido.web.js"></script>
+<!--SCRIPTS END-->
+	
+	
+  </head>
+
+  <body>
+    <a href="/" target="_self">トップに戻る</a>
+
+    <script type="text/javascript">
+	var vsido = new VSidoWeb();
+	var inertval = 500; 
+	var forward = 0;
+	function doForward() {
+		forward = forward + 1;
+		var walk = vsido.walk();
+		walk['forward'] = forward;
+		walk['turn'] = 0;
+		console.log(JSON.stringify(walk));
+		vsido.send(walk);
+	}
+	var backward = 0;
+	function doBackward() {
+		backward = backward + 1;
+		var walk = vsido.walk();
+		walk['forward'] = 0 - backward;
+		walk['turn'] = 0;
+		console.log(JSON.stringify(walk));
+		vsido.send(walk);
+	}
+	var left = 0;
+	function doLeft() {
+		left = left + 1;
+		var walk = vsido.walk();
+		walk['forward'] = 0;
+		walk['turn'] = left;
+		console.log(JSON.stringify(walk));
+		vsido.send(walk);
+	}
+	var right = 0;
+	function doRight() {
+		right = right + 1;
+		var walk = vsido.walk();
+		walk['forward'] = 0;
+		walk['turn'] = 0 - right;
+		console.log(JSON.stringify(walk));
+		vsido.send(walk);
+	}
+	$(function(){
+		var timerForward = null;
+		$("#vJoyStickForward").on("vmousedown", function(e) {
+		/*
+			var x = e.originalEvent.changedTouches[0].pageX;
+			var y = e.originalEvent.changedTouches[0].pageY;
+			var msg = {
+				"Forwardstart":{"x":x,"y":y}
+			};
+			$("#vsido_output_request").text('send:<'+JSON.stringify(msg)+'>');
+		*/
+			doForward();
+			timerForward = setInterval( function() {
+				doForward();
+			}
+			, inertval);
+		});
+		/*
+		$("#vJoyStickForward").on("vmousemove", function(e) {
+		});
+		*/
+		$("#vJoyStickForward").on("vmouseup", function(e) {
+			forward = 0;
+			clearInterval(timerForward);
+		});
+		$("#vJoyStickForward").on("vmouseout", function(e) {
+			forward = 0;
+			clearInterval(timerForward);
+		});
+
+		var timerBackward = null;
+		$("#vJoyStickBackward").on("vmousedown", function(e) {
+			doBackward();
+			timerBackward = setInterval( function() {
+				doBackward();
+			}
+			, inertval);
+		});
+		$("#vJoyStickBackward").on("vmouseup", function(e) {
+			backward = 0;
+			clearInterval(timerBackward);
+		});	
+		$("#vJoyStickBackward").on("vmouseout", function(e) {
+			backward = 0;
+			clearInterval(timerBackward);
+		});
+
+		var timerLeft = null;
+		$("#vJoyStickLeft").on("vmousedown", function(e) {
+			doLeft();
+			timerLeft = setInterval( function() {
+				doLeft();
+			}
+			, inertval);
+		});
+		$("#vJoyStickLeft").on("vmouseout", function(e) {
+			left = 0;
+			clearInterval(timerLeft);
+		});
+		$("#vJoyStickBackward").on("vmouseup", function(e) {
+			left = 0;
+			clearInterval(timerLeft);
+		});
+
+		
+		$("#vJoyStickRight").on("vmousedown", function(e) {
+			doRight();
+			timerLeft = setInterval( function() {
+				doRight();
+			}
+			, inertval);
+		});
+		$("#vJoyStickRight").on("vmouseout", function(e) {
+			right = 0;
+			clearInterval(timerLeft);
+		});	
+		$("#vJoyStickRight").on("vmouseup", function(e) {
+			right = 0;
+			clearInterval(timerLeft);
+		});
+		$("#vJoyStickStop").on("vmousedown", function(e) {
+			forward = 0;
+			clearInterval(timerForward);
+			backward = 0;
+			clearInterval(timerBackward);
+			left = 0;
+			clearInterval(timerLeft);
+			right = 0;
+			clearInterval(timerLeft);
+		});
+		$("#vJoyStickStop").on("vmouseout", function(e) {
+			forward = 0;
+			clearInterval(timerForward);
+			backward = 0;
+			clearInterval(timerBackward);
+			left = 0;
+			clearInterval(timerLeft);
+			right = 0;
+			clearInterval(timerLeft);
+		});	
+		$("#vJoyStickStop").on("vmouseup", function(e) {
+			forward = 0;
+			clearInterval(timerForward);
+			backward = 0;
+			clearInterval(timerBackward);
+			left = 0;
+			clearInterval(timerLeft);
+			right = 0;
+			clearInterval(timerLeft);
+		});
+	});
+</script>
+
+<br/>
+<a href="/walk" target="_self">アナログ式</a>
+<a href="/walk/digital" target="_self">ディジタル式</a>
+<a href="/walk/sensor" target="_self">センサー</a>
+<br/>
+
+<div id="vJoyStick">
+
+<div id="vJoyStickForward" class="vJoyStickBlock">
+</div>
+
+<div id="vJoyStickMiddle">
+<div id="vJoyStickLeft" class="vJoyStickBlock" >
+</div>
+
+<div id="vJoyStickStop" class="vJoyStickBlock">
+</div>
+
+<div id="vJoyStickRight" class="vJoyStickBlock">
+</div>
+</div>
+
+<div id="vJoyStickBackward" class="vJoyStickBlock">
+</div>
+
+</div>
+
+
+
+   <div id="vsido_div_top">
+     <label>要求<label/>
+     <div id="vsido_output_request"></div>
+     <label>返事<label/>
+     <div id="vsido_output_response"></div>
+   </div>
+	
+  </body>
+</html>

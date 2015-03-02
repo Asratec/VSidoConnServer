@@ -1,0 +1,23 @@
+
+
+#vsido_connection_search {
+	margin:auto;
+	width:80%;
+	height:20px;
+	text-align: center;
+//	border:3px solid red;
+}
+
+
+#vsido_connection_list {
+	margin:auto;
+	width:80%;
+	height:auto;
+	text-align: center;
+//	border:1px solid red;
+}
+
+#vsido_connection_table {
+	border: 1px solid black;
+}
+

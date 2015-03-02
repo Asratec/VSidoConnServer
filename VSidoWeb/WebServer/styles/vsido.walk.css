@@ -1,0 +1,66 @@
+
+
+#analogJoyStick {
+	margin:auto;
+	width:300px;
+	height:300px;
+//   border:3px solid red;
+}
+
+
+
+
+
+#vJoyStick {
+	margin:auto;
+	width:270px;
+	height:270px;
+    border:1px solid red;
+}
+
+.vJoyStickBlock {
+	margin:auto;
+	width:80px;
+	height:80px;
+	border:5px solid #808080;
+}
+
+
+#vJoyStickMiddle {
+}
+
+
+#vJoyStickForward {
+	background-image: url("/images/forward.png");
+	background-repeat: no-repeat;
+	background-position: center center;
+}
+
+
+#vJoyStickLeft {
+	float:left;
+	background-image: url("/images/left.png");
+	background-repeat: no-repeat;
+	background-position: center center;
+}
+#vJoyStickStop {
+	float:left;
+	background-image: url("/images/stop.png");
+	background-repeat: no-repeat;
+	background-position: center center;
+}
+#vJoyStickRight {
+	float:left;
+	background-image: url("/images/right.png");
+	background-repeat: no-repeat;
+	background-position: center center;
+}
+
+#vJoyStickBackward {
+	clear:both;
+	background-image: url("/images/backward.png");
+	background-repeat: no-repeat;
+	background-position: center center;
+}
+
+

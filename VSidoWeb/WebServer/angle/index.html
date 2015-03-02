@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf8">
+    <title>VSido Web App Sample</title>
+    <!-- Viewport mobile tag for sensible mobile support -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<!--meta name="viewport" content="user-scalable=no"-->
+
+    <!--STYLES-->
+    <link rel="stylesheet" href="/styles/importer.css">
+    <link rel="stylesheet" href="/styles/jquery.mobile-1.4.5.min.css">
+    <link rel="stylesheet" href="/styles/vsido.connection.css">
+    <link rel="stylesheet" href="/styles/vsido.hand.css">
+    <link rel="stylesheet" href="/styles/vsido.layout.css">
+    <link rel="stylesheet" href="/styles/vsido.walk.css">
+    <!--STYLES END-->
+    
+	<!--SCRIPTS-->
+<script src="/js/jquery-2.1.1.min.js"></script>
+<script src="/js/jquery.mobile-1.4.5.min.js"></script>
+<script src="/js/vsido.camera.js"></script>
+<script src="/js/vsido.canvas.acceleration.js"></script>
+<script src="/js/vsido.canvas.hand.js"></script>
+<script src="/js/vsido.canvas.joystick.js"></script>
+<script src="/js/vsido.canvas.js"></script>
+<script src="/js/vsido.canvas.sensorstick.js"></script>
+<script src="/js/vsido.web.js"></script>
+<!--SCRIPTS END-->
+	
+	
+  </head>
+
+  <body>
+    <a href="/" target="_self">トップに戻る</a>
+
+    <script type="text/javascript">
+$(function(){
+  var vsido = new VSidoWeb();
+/*
+ サーボ1
+*/
+  $("#vsido_range_servo_1").change(function(){
+    	console.log('vsido_range_servo_1');
+		var angle = vsido.servoAngle();
+		console.log(JSON.stringify(angle));
+		angle["cycle"] = 1;
+		angle["servo"].push(
+			{
+				"sid":2,
+				"angle":parseInt($(this).val())
+			}
+		);
+		console.log(JSON.stringify(angle));
+		
+		$("#vsido_output_request").text('send:<'+JSON.stringify(angle)+'>');
+		vsido.send(angle,function(response,timeResponse) {
+			console.log(JSON.stringify(response));
+			$("#vsido_output_response").text(
+				'response:<' + JSON.stringify(response) + '>' +
+				'resTime:<' + timeResponse + 'ms>'
+			);
+		});
+    });
+/*
+ サーボ２
+*/
+  $("#vsido_range_servo_2").change(function(){
+    	console.log('vsido_range_servo_2');
+		var angle = vsido.servoAngle();
+		console.log(JSON.stringify(angle));
+		angle["cycle"] = 1;
+		angle["servo"].push(
+			{
+				"sid":3,
+				"angle":parseInt($(this).val())
+			}
+		);
+		console.log(JSON.stringify(angle));
+		vsido.send(angle);
+    });
+
+	
+	/*
+	* sample to read angle of servo 2
+	*/
+	var readAngle = vsido.readServoInfo();
+	console.log(JSON.stringify(readAngle));
+	var servoInfo = vsido.readServoAngle();
+	servoInfo['sid'] = 2;
+	servoInfo['address'] = 19;
+	servoInfo['length'] = 2;
+	readAngle["servo"].push(servoInfo);
+	console.log(JSON.stringify(readAngle));
+	vsido.send(readAngle,function(response) {
+		console.log(response);
+	});
+	
+});
+
+</script>
+
+
+<div class="vsido_div_top">
+   <label>目標角度設定:</lable>
+   <!--div class="vsido_div_btn">
+	 <input type="button" class="vsido_btn" value="目標角度設定" id= "vsido_dist_angle">
+   </div-->
+   <div class="vsido_div_range">
+	 <label for="vsido_range_servo_1">サーボ１角度:</label>
+	 <input type="range"  class="vsido_range"  data-highlight="true" id= "vsido_range_servo_1" min="-140" max="140" value="0" step="1" />
+   </div>
+   <br>
+   <br>
+   <br>
+   <br>
+   <br>
+   <div class="vsido_div_range">
+	 <label for="vsido_range_servo_2">サーボ2角度:</label>
+	 <input type="range"  class="vsido_range"  data-highlight="true" id= "vsido_range_servo_2" min="-140" max="140" value="0" step="1" />
+   </div>
+   <br>
+   <br>
+   <br>
+   <br>
+   <br>
+</div>
+
+
+   <div id="vsido_div_top">
+     <label>要求<label/>
+     <div id="vsido_output_request"></div>
+     <label>返事<label/>
+     <div id="vsido_output_response"></div>
+   </div>
+	
+  </body>
+</html>

@@ -1,0 +1,119 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf8">
+    <title>VSido Web App Sample</title>
+    <!-- Viewport mobile tag for sensible mobile support -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<!--meta name="viewport" content="user-scalable=no"-->
+
+    <!--STYLES-->
+    <link rel="stylesheet" href="/styles/importer.css">
+    <link rel="stylesheet" href="/styles/jquery.mobile-1.4.5.min.css">
+    <link rel="stylesheet" href="/styles/vsido.connection.css">
+    <link rel="stylesheet" href="/styles/vsido.hand.css">
+    <link rel="stylesheet" href="/styles/vsido.layout.css">
+    <link rel="stylesheet" href="/styles/vsido.walk.css">
+    <!--STYLES END-->
+    
+	<!--SCRIPTS-->
+<script src="/js/jquery-2.1.1.min.js"></script>
+<script src="/js/jquery.mobile-1.4.5.min.js"></script>
+<script src="/js/vsido.camera.js"></script>
+<script src="/js/vsido.canvas.acceleration.js"></script>
+<script src="/js/vsido.canvas.hand.js"></script>
+<script src="/js/vsido.canvas.joystick.js"></script>
+<script src="/js/vsido.canvas.js"></script>
+<script src="/js/vsido.canvas.sensorstick.js"></script>
+<script src="/js/vsido.web.js"></script>
+<!--SCRIPTS END-->
+	
+	
+  </head>
+
+  <body>
+    <a href="/" target="_self">トップに戻る</a>
+
+    <script type="text/javascript">
+	var vsido = new VSidoWeb();
+	$(function(){
+		// Z軸
+		$('#vsido_div_hand_z_range').change(function(){
+			var ik = vsido.ik();
+			ik['ikf']['dist']['pos'] = true;
+
+			var px = 0;
+			var py = 0;
+			var pz = parseInt($('#vsido_div_hand_z_range').val());
+			var kdt = vsido.kdt();
+			kdt['kid'] = 2;
+			kdt['kdt']['pos']['x'] = px;
+			kdt['kdt']['pos']['y'] = py;
+			kdt['kdt']['pos']['z'] = pz;
+			
+			ik['kdts'].push(kdt);
+
+			$("#vsido_output_request").text('send:<'+JSON.stringify(ik)+'>');
+			vsido.send(ik);
+			
+		});
+		// xy軸
+		Hand.initialize( 
+			function move(x,y){
+				var ik = vsido.ik();
+				ik['ikf']['dist']['pos'] = true;
+				
+				// 切り捨て
+				var px = x | 0;
+				var py = y | 0;
+				var pz = parseInt($('#vsido_div_hand_z_range').val());
+				var kdt = vsido.kdt();
+				kdt['kid'] = 3;
+				kdt['kdt']['pos']['x'] = px;
+				kdt['kdt']['pos']['y'] = py;
+				kdt['kdt']['pos']['z'] = pz;
+				
+				ik['kdts'].push(kdt);
+				$("#vsido_output_request").text('send:<'+JSON.stringify(ik)+'>');
+				vsido.send(ik);
+			}
+		);
+		
+		// sample to read ik
+		var readIK = vsido.readIK();
+		readIK['ikf']['cur']['pos'] = true;
+		
+		$("#vsido_output_request").text('send:<'+JSON.stringify(readIK)+'>');
+		vsido.send(readIK);
+		
+	});
+</script>
+
+
+
+<a href="/ik" target="_self">左手</a>
+<a href="/ik/rightH" target="_self">右手</a>
+<a href="/ik/head" target="_self">首</a>
+<br/>
+<label>タッチXY軸:</label>
+<div id="VSidoDivHand">
+	<canvas id="VSidoCanvasHand"></canvas>
+</div>
+
+<div id="vsido_div_hand_z">
+ <label>Z軸:</label>
+ <input type="range" data-highlight="true" id= "vsido_div_hand_z_range" min="-100" max="100" value="0" step="1" />
+</div>
+
+
+
+   <div id="vsido_div_top">
+     <label>要求<label/>
+     <div id="vsido_output_request"></div>
+     <label>返事<label/>
+     <div id="vsido_output_response"></div>
+   </div>
+	
+  </body>
+</html>
