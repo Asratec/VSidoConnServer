@@ -74,19 +74,27 @@ string ResponseServoInfo::conv(void)
 		servoObj["sid"] = picojson::value((double)servo.front());
 		servo.pop_front();
 
-		char angle1 = servo.front();
+		unsigned char low_byte = servo.front();
 		servo.pop_front();
-		char angle2 = servo.front();
+		unsigned char high_byte = servo.front();
 		servo.pop_front();
+
 		
-		int iAngle1 = (int)angle1;
-		int iAngle2 = (int)angle2;
-		DUMP_VAR(iAngle1);
-		DUMP_VAR(iAngle2);
+//		int iAngle1 = (int)(angle1 & 0x80);
+//		int iAngle2 = (int)(angle2 & 0xff);
+//		DUMP_VAR(iAngle1);
+//		DUMP_VAR(iAngle2);		
+//		int angle = ( (((iAngle1 >> 1) << 8) & 0xff00) + iAngle2) >> 1;
 		
-		int angle = (((iAngle2 >> 1) << 8) + iAngle1) >> 1;
+		short data_low = low_byte;
+		short data_high = (short)((high_byte & 0x80) | (high_byte) >> 1);
+		short combined_data = (short)(((data_high << 8) & 0x0000FF00) | ((data_low) & 0x000000FF));
+
+		short converted_data = (short)((combined_data & 0x8000) | (combined_data >> 1));
+
 		
-		servoObj["angle"] = picojson::value((double)angle);
+		
+		servoObj["angle"] = picojson::value(((double)converted_data)/10);
 		
 		servoskArray.push_back(picojson::value(servoObj));
 	}
