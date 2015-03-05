@@ -95,6 +95,7 @@ void ResponsePing::splite(void)
 		if(0 == ++i%2)
 		{
 			_pings.push_back(ping);
+			ping.clear();
 		}
 	}
 }

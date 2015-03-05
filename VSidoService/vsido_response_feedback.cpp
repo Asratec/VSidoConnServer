@@ -94,6 +94,7 @@ void ResponseFeedback::splite(void)
 		if(0 == ++i%2)
 		{
 			_feedbacks.push_back(feedback);
+			feedback.clear();
 		}
 	}
 }

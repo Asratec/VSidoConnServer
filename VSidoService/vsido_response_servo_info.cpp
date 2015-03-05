@@ -113,6 +113,7 @@ void ResponseServoInfo::splite(void)
 		if(0 == ++i%3)
 		{
 			_servos.push_back(servo);
+			servo.clear();
 		}
 	}
 }

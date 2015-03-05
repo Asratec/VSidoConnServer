@@ -166,6 +166,7 @@ void ResponseIK::spliteKDT(void)
 		if(0 == ++i%kdtUnit)
 		{
 			_kdts.push_back(kdt);
+			kdt.clear();
 		}
 	}
 	DUMP_VAR(_kdts.size());
