@@ -76,15 +76,55 @@ using namespace VSido;
  */
 
 
+extern string exec(string cmd);
+
+
 /** 実行時必要なファイル領域を作る
 * @param None
 * @return None
 */
 static void initEnv(void)
-{
-    {
+{	
+	string systemInfo("uname -n");
+    auto uname = exec(systemInfo);
+	FATAL_VAR(uname);
+	if("raspberrypi\n"== uname)
+	{
+#if 0 // next step
+		/// using bluetooth.
+		{
+			string shell("hciconfig ");
+	        auto result = exec(shell);
+	    	FATAL_VAR(result);
+			if(result.size())
+			{
+				
+			}
+		}
+#endif
+		/// using AMA0
+		{
+			string shell("find  /dev/tty* | grep ttyAMA0");
+	        auto result = exec(shell);
+	    	FATAL_VAR(result);
+			if(result.size() > 5)
+			{
+				string link("ln -sf /dev/ttyAMA0 /dev/tty.vsido.link");
+				auto result = exec(link);
+				FATAL_VAR(result);
+			}
+		}
+	}
+	else
+	{
         string shell("/home/sysroot/usr/bin/btsetup");
-        ::system(shell.c_str());
+        auto result = exec(shell);
+    	FATAL_VAR(result);
+		{
+			string link("ln -sf /dev/rfcomm75 /dev/tty.vsido.link");
+			auto result = exec(link);
+			FATAL_VAR(result);
+		}
     }
 }
 
@@ -101,17 +141,17 @@ int main(int argc ,char *argv[])
     UARTSend send;
 	Dispatcher dispath(send);
 	/// ユーザー操作からVSidoConnectorまで情報伝達経路
-	/// VSidoCmd --> VSidoService --> UART --> Bluetooth --> VSidoConnector
+	/// VSidoCmd --> VSidoService --> UART --> VSidoConnector
 	/// ユーザー操作の操作待ちスレッド
     RSRequest request(dispath);
 
 	/// ユーザー操作からVSidoConnectorまで情報伝達経路
-	/// Web --> WebSocket --> VSidoService --> UART --> Bluetooth --> VSidoConnector
+	/// Web --> WebSocket --> VSidoService --> UART --> VSidoConnector
 	/// ユーザー操作の操作待ちスレッド
     WSRequest reqWS(dispath);
 	
 	/// VSidoConnectorからユーザーフィードバックまで情報伝達経路
-	/// Web <-- Apache2 <-- VSidoCmd <-- VSidoService <-- UART <-- Bluetooth <-- VSidoConnector
+	/// Web <-- Apache2 <-- VSidoCmd <-- VSidoService <-- UART <-- VSidoConnector
 	/// VSidoコネクターのACK待ちスレッド
     UARTRead read(dispath);
     

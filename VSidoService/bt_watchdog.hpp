@@ -35,11 +35,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <tuple>
 #include <memory>
 using namespace std;
+#include "uart_connect.hpp"
 
 namespace VSido
 {
 class UARTSend;
 class UARTRead;
+class UARTConnect;
 
 /**
  * Bluetooth接続管理
@@ -74,21 +76,11 @@ private:
 	* @return None
 	*/
 	BTWatchDog();
-
-	/** SPPを開く
-	* @return None
-	*/
-	void openSPP();
-
-	/** SPPを閉じる
-	* @return None
-	*/
-	void closeSPP();
 	
 private:
 	UARTSend &_send;
 	UARTRead &_read;
-	int _uart;
+	UARTConnect _conn;
 };
 } // namespace VSido
 

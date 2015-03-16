@@ -87,6 +87,11 @@ string RequestBindBT::runTask(void)
 	DUMP_VAR(cmd);
 	auto result = exec(cmd);
 	DUMP_VAR(result);
+	{
+		string link("ln -sf /dev/rfcomm75 /dev/tty.vsido.link");
+		auto result = exec(link);
+		FATAL_VAR(result);
+	}
 	
 	BTWatchDog::notifyBTBindEnd();
 	

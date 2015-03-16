@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace std;
 
 #include "bt_watchdog.hpp"
+#include "uart_connect.hpp"
 #include "uart_send.hpp"
 #include "uart_read.hpp"
 using namespace VSido;
@@ -90,14 +91,14 @@ void BTWatchDog::notifyBTBindEnd(void)
 BTWatchDog::BTWatchDog(UARTSend &send,UARTRead &read)
 :_send(send)
 ,_read(read)
-,_uart(-1)
+,_conn("/dev/tty.vsido.link")
 {
-	openSPP();
-    DUMP_VAR(_uart);
-	if(0 < _uart)
+	_conn.openSPP();
+    DUMP_VAR(_conn);
+	if(0 < _conn)
 	{
-		_send.setFD(_uart);
-		_read.setFD(_uart);
+		_send.setFD(_conn);
+		_read.setFD(_conn);
 	}
 }
 
@@ -113,7 +114,7 @@ void BTWatchDog::operator()()
 		bindCvBegin.wait(lckBegin);
 		
 		/// close uart.
-		closeSPP();
+		_conn.closeSPP();
 		
 		
 		unique_lock<mutex> lckEnd(bindMtxEnd);
@@ -121,187 +122,17 @@ void BTWatchDog::operator()()
 		
 		/// open uart.
 		usleep(1000*1000*5);
-		openSPP();
-	    DUMP_VAR(_uart);
-		if(0 < _uart)
+		_conn.openSPP();
+	    DUMP_VAR(_conn);
+		if(0 < _conn)
 		{
-			_send.setFD(_uart);
-			_read.setFD(_uart);
+			_send.setFD(_conn);
+			_read.setFD(_conn);
 		}
 	}
 }
 
 
 
-static struct termios oldtio;
-static struct termios newtio;
-
-/** SPPを開く
-* @return None
-*/
-void BTWatchDog::openSPP()
-{
-	/// Bluetoothのシリアルディバイスを開く。
-    const char dev[] = "/dev/rfcomm75";
-
-//    _uart = open( dev, O_RDWR);
-//    int _uart = open( dev, O_WRONLY | O_NOCTTY|O_NDELAY);
-    _uart = open( dev, O_RDWR | O_NOCTTY|O_NDELAY);
-    if( _uart < 0 )
-    {
-        perror( dev );
-    	return;
-    }
-	auto tcret = tcflush(_uart,TCIOFLUSH);
-	if (tcret == -1) 
-	{
-        perror( dev );
-	}
-
-	tcgetattr( _uart, &oldtio );
-
-	/// ビットレート設定など、シリアル通信の属性設定
-    newtio = oldtio;
-	
-	dumpUartFlags(newtio);
-	
-	newtio.c_iflag |=  IGNBRK;
-	newtio.c_iflag &= ~(ICRNL | IXON);
-	
-
-	newtio.c_cflag = B115200 | CS8 | CLOCAL | CREAD;
-    newtio.c_lflag = 0;
-
-	newtio.c_cc[VMIN] = 1;
-	newtio.c_cc[VTIME] = 1;
-	
-	newtio.c_oflag &= ~(ONLCR);
-
-	dumpUartFlags(newtio);
-
-    tcsetattr(_uart, TCSANOW, &newtio);
-    DUMP_VAR(_uart);
-
-}
-
-/** SPPを閉じる
-* @return None
-*/
-void BTWatchDog::closeSPP()
-{
-    if( _uart < 0 )
-    {
-    	return;
-    }
-    tcsetattr(_uart, TCSANOW, &oldtio);
-    close(_uart);
-}
-
-
-
-
-#define DUMP_FLAGS(x,y) \
-{\
-	if(x & y)\
-	{\
-		cout << "DUMP_FLAGS:" << __func__ << #x << ":" << #y << " is ON "<< endl; \
-	}\
-}
-
-#define DUMP_CC_FLAGS(x,y) \
-{\
-	cout << "DUMP_FLAGS:" << __func__ << #x << "["  << #y << "] is =<" << x[y] << ">" << endl; \
-}
-
-
-void dumpUartFlags(termios term)
-{
-    FATAL_VAR(&term);
-	
-	DUMP_FLAGS(term.c_iflag,IGNBRK);
-	DUMP_FLAGS(term.c_iflag,BRKINT);
-	DUMP_FLAGS(term.c_iflag,IGNPAR);
-	DUMP_FLAGS(term.c_iflag,PARMRK);
-	DUMP_FLAGS(term.c_iflag,INPCK);
-	DUMP_FLAGS(term.c_iflag,ISTRIP);
-	DUMP_FLAGS(term.c_iflag,INLCR);
-	DUMP_FLAGS(term.c_iflag,IGNCR);
-	DUMP_FLAGS(term.c_iflag,ICRNL);
-	DUMP_FLAGS(term.c_iflag,IUCLC);
-	DUMP_FLAGS(term.c_iflag,IXON);
-	DUMP_FLAGS(term.c_iflag,IXANY);
-	DUMP_FLAGS(term.c_iflag,IXOFF);
-	DUMP_FLAGS(term.c_iflag,IMAXBEL);
-	DUMP_FLAGS(term.c_iflag,IUTF8);
-	
-	DUMP_FLAGS(term.c_oflag,OPOST);
-	DUMP_FLAGS(term.c_oflag,OLCUC);
-	DUMP_FLAGS(term.c_oflag,ONLCR);
-	DUMP_FLAGS(term.c_oflag,OCRNL);
-	DUMP_FLAGS(term.c_oflag,ONOCR);
-	DUMP_FLAGS(term.c_oflag,ONLRET);
-	DUMP_FLAGS(term.c_oflag,OFILL);
-	DUMP_FLAGS(term.c_oflag,OFDEL);
-	DUMP_FLAGS(term.c_oflag,NLDLY);
-	DUMP_FLAGS(term.c_oflag,CRDLY);
-	DUMP_FLAGS(term.c_oflag,TABDLY);
-	DUMP_FLAGS(term.c_oflag,BSDLY);
-	DUMP_FLAGS(term.c_oflag,VTDLY);
-	DUMP_FLAGS(term.c_oflag,FFDLY);
-
-
-	DUMP_FLAGS(term.c_cflag,CBAUD);
-	DUMP_FLAGS(term.c_cflag,CBAUDEX);
-	DUMP_FLAGS(term.c_cflag,CSIZE);
-	DUMP_FLAGS(term.c_cflag,CSTOPB);
-	DUMP_FLAGS(term.c_cflag,CREAD);
-	DUMP_FLAGS(term.c_cflag,PARENB);
-	DUMP_FLAGS(term.c_cflag,PARODD);
-	DUMP_FLAGS(term.c_cflag,HUPCL);
-	DUMP_FLAGS(term.c_cflag,CLOCAL);
-//	DUMP_FLAGS(term.c_cflag,LOBLK);
-	DUMP_FLAGS(term.c_cflag,CIBAUD);
-	DUMP_FLAGS(term.c_cflag,CMSPAR);
-	DUMP_FLAGS(term.c_cflag,CRTSCTS);
-	
-
-	DUMP_FLAGS(term.c_lflag,ISIG);
-	DUMP_FLAGS(term.c_lflag,ICANON);
-	DUMP_FLAGS(term.c_lflag,XCASE);
-	DUMP_FLAGS(term.c_lflag,ECHO);
-	DUMP_FLAGS(term.c_lflag,ECHOE);
-	DUMP_FLAGS(term.c_lflag,ECHOK);
-	DUMP_FLAGS(term.c_lflag,ECHONL);
-	DUMP_FLAGS(term.c_lflag,ECHOCTL);
-	DUMP_FLAGS(term.c_lflag,ECHOPRT);
-	DUMP_FLAGS(term.c_lflag,ECHOKE);
-//	DUMP_FLAGS(term.c_lflag,DEFECHO);
-	DUMP_FLAGS(term.c_lflag,FLUSHO);
-	DUMP_FLAGS(term.c_lflag,NOFLSH);
-	DUMP_FLAGS(term.c_lflag,TOSTOP);
-	DUMP_FLAGS(term.c_lflag,PENDIN);
-	DUMP_FLAGS(term.c_lflag,IEXTEN);
-	
-	DUMP_CC_FLAGS(term.c_cc ,VDISCARD);
-//	DUMP_CC_FLAGS(term.c_cc ,VDSUSP);
-	DUMP_CC_FLAGS(term.c_cc ,VEOF);
-	DUMP_CC_FLAGS(term.c_cc ,VEOL);
-	DUMP_CC_FLAGS(term.c_cc ,VEOL2);
-	DUMP_CC_FLAGS(term.c_cc ,VERASE);
-	DUMP_CC_FLAGS(term.c_cc ,VINTR);
-	DUMP_CC_FLAGS(term.c_cc ,VKILL);
-	DUMP_CC_FLAGS(term.c_cc ,VLNEXT);
-	DUMP_CC_FLAGS(term.c_cc ,VMIN);
-	DUMP_CC_FLAGS(term.c_cc ,VQUIT);
-	DUMP_CC_FLAGS(term.c_cc ,VREPRINT);
-	DUMP_CC_FLAGS(term.c_cc ,VSTART);
-//	DUMP_CC_FLAGS(term.c_cc ,VSTATUS);
-	DUMP_CC_FLAGS(term.c_cc ,VSTOP);
-	DUMP_CC_FLAGS(term.c_cc ,VSUSP);
-//	DUMP_CC_FLAGS(term.c_cc ,VSWTCH);
-	DUMP_CC_FLAGS(term.c_cc ,VTIME);
-	DUMP_CC_FLAGS(term.c_cc ,VWERASE);
-
-}
 
 
