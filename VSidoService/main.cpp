@@ -84,7 +84,26 @@ extern string exec(string cmd);
 * @return None
 */
 static void initEnv(void)
-{	
+{
+	/// add a action log folder
+    {
+        string shell("umount /mnt/vsido/log");
+        int ret = ::system(shell.c_str());
+    }
+    {
+        string shell("mkdir -p /mnt/vsido/log");
+        int ret = ::system(shell.c_str());
+    }
+    {
+        string shell("mount -t tmpfs -o size=2M tmpfs /mnt/vsido/log");
+        int ret = ::system(shell.c_str());
+    }
+    {
+        string shell("sync");
+        int ret = ::system(shell.c_str());
+    }
+	
+	
 	string systemInfo("uname -n");
     auto uname = exec(systemInfo);
 	FATAL_VAR(uname);

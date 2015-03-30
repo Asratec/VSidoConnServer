@@ -45,7 +45,7 @@ $(function(){
     	console.log('vsido_range_servo_1');
 		var angle = vsido.servoAngle();
 		console.log(JSON.stringify(angle));
-		angle["cycle"] = 1;
+		angle["cycle"] = 10;
 		angle["servo"].push(
 			{
 				"sid":2,
@@ -70,7 +70,7 @@ $(function(){
     	console.log('vsido_range_servo_2');
 		var angle = vsido.servoAngle();
 		console.log(JSON.stringify(angle));
-		angle["cycle"] = 1;
+		angle["cycle"] = 10;
 		angle["servo"].push(
 			{
 				"sid":3,

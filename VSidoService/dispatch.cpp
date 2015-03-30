@@ -79,12 +79,50 @@ Dispatcher::Dispatcher(UARTSend &send)
 }
 
 
+#include <fstream>
+#include <string>
+#include <iostream>
+
+static int gLogID = 0;
+extern string exec(string cmd);
+static void logReq(const string &req)
+{
+	if(0 == gLogID++ % 100 )
+	{
+        string shell("rm -f /mnt/vsido/log/*.log");
+        int ret = ::system(shell.c_str());
+	}
+	string logName = "/mnt/vsido/log/";
+	char buffer [10] ={0};
+	snprintf(buffer,sizeof(buffer)-1,"%08d",gLogID);
+	logName += string(buffer);
+	logName += ".req.log";
+	std::ofstream out(logName,std::ios_base::app | std::ios_base::out);
+	out << req;
+	out <<  endl;
+    out.close();	
+}
+static void logRes(const string &res)
+{
+	string logName = "/mnt/vsido/log/";
+	char buffer [10] ={0};
+	snprintf(buffer,sizeof(buffer)-1,"%08d",gLogID);
+	logName += string(buffer);
+	logName += ".res.log";
+	std::ofstream out(logName,std::ios_base::app | std::ios_base::out);
+	out << res;
+    out.close();
+}
+
+
+
 /** 要求を追加する
 * @param req 要求
 * @param res WebSocket返事先
 */
 void Dispatcher::addRequest(const string &req,shared_ptr<WSResponse> res)
 {
+	logReq(req);
 	DUMP_VAR_DETAILS(req);
 	if(this->filterBusy())
 	{
@@ -106,11 +144,13 @@ void Dispatcher::addRequest(const string &req,shared_ptr<WSResponse> res)
 */
 void Dispatcher::addRequest(const string &req,shared_ptr<RSResponse> res)
 {
+	logReq(req);
 	DUMP_VAR_DETAILS(req);
 	
 	if(this->filterBusy())
 	{
 		res->ackBusy();
+		logRes("{\"type\":\"busy\"}\n");
 	}
 	else
 	{
@@ -128,11 +168,13 @@ void Dispatcher::clearTimeout(void)
 	auto distWS = this->ackDistWS();
 	if(nullptr != distWS && false == _skipTimeout)
 	{
+		logRes("{\"type\":\"timeout\"}\n");
 		distWS->ackTimeout();
 	}
 	auto distRS = this->ackDistRS();
 	if(nullptr != distRS && false == _skipTimeout)
 	{
+		logRes("{\"type\":\"timeout\"}\n");
 		distRS->ackTimeout();
 	}
 	
@@ -222,6 +264,7 @@ void Dispatcher::ack(const list<unsigned char> &uart)
 	{
 		auto expect = distWS->getExpect();
 		auto resMsg = response.conv(expect);
+		logRes(resMsg);
 		distWS->ack(resMsg);
 	}
 	auto distRS = this->ackDistRS();
@@ -229,6 +272,7 @@ void Dispatcher::ack(const list<unsigned char> &uart)
 	{
 		auto expect = distRS->getExpect();
 		auto resMsg = response.conv(expect);
+		logRes(resMsg);
 		distRS->ack(resMsg);
 	}
 
@@ -241,6 +285,7 @@ void Dispatcher::ack(const list<unsigned char> &uart)
 		this->_rsRes.clear();
 		DUMP_VAR_DETAILS(&dataMtx);
 	}
+	ackCv.notify_all();
 	
 }
 
