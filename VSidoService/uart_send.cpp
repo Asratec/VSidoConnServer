@@ -93,9 +93,10 @@ void UARTSend::write(const list<unsigned char> &data)
 	auto preMiliSec = pred_tv.tv_sec *1000 + pred_tv.tv_usec /1000;
 
 	auto tcret = tcflush(_fd,TCIOFLUSH);
-	if (tcret == -1) 
+	if (0 > tcret) 
 	{
         perror("tcflush");
+		tryReconnect();
 	}
 	
     const auto writeRet = ::write(_fd,buf,data.size());
@@ -103,12 +104,15 @@ void UARTSend::write(const list<unsigned char> &data)
 	{
 		FATAL_VAR(writeRet);
 		FATAL_VAR(data.size());
+        perror("write");
+		tryReconnect();
 	}
 	auto tcRet = tcdrain(_fd);
 	if(0 > tcRet)
 	{
 		FATAL_VAR(tcRet);
 		perror("tcdrain");
+		tryReconnect();
 	}
 	DUMP_VAR(tcRet);
 
@@ -120,5 +124,13 @@ void UARTSend::write(const list<unsigned char> &data)
 	
 	DUMP_VAR(uartWriteTime);
 
+}
+
+#include "bt_watchdog.hpp"
+
+void UARTSend::tryReconnect(void)
+{
+	BTWatchDog::notifyBTBindBegin();
+	BTWatchDog::notifyBTBindEnd();
 }
 

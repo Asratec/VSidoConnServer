@@ -63,6 +63,7 @@ public:
     
 private:
     void write(const list<unsigned char> &data);
+    void tryReconnect(void);
 private:
     int _fd;
     list<list<unsigned char>> _cmds;
