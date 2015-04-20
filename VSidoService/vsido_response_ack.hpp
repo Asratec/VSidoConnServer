@@ -58,6 +58,11 @@ public:
 	* }	
 	*/
 	virtual string conv(void);
+    
+    virtual ~ResponseAck()
+    {
+        cout << __FILE__  << ":" << __LINE__ << endl;
+    };
 private:
     ResponseAck(void);
 private:

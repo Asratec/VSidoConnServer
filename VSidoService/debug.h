@@ -60,7 +60,7 @@ extern mutex _globalLockMtx;
 
 
 
-#if 0
+#if 1
 	#define DUMP_VAR_DETAILS(x) \
 	{	\
 		lock_guard<mutex> lock(_globalLockMtx);\

@@ -3,15 +3,28 @@ file(GLOB __CXX "./*.cpp")
 file(GLOB __HXX "./*.hpp")
 file(GLOB __H "./*.h")
 
+
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    aux_source_directory("mac" __PLATFORM)
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    aux_source_directory("linux" __PLATFORM)
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+
 include_directories(${CMAKE_INSTALL_PREFIX}/include)
 
 LINK_DIRECTORIES(${CMAKE_INSTALL_PREFIX}/lib)
+include_directories(./)
+
 
 
 add_executable (VSido.srv 
 	${__CXX}
 	${__HXX}
 	${__H}
+	${__PLATFORM}
 )
 target_link_libraries( VSido.srv 
 	pthread

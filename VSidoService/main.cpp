@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <thread>
 #include <iostream>
+#include <sstream>
 using namespace std;
 
 #include "uart_send.hpp"
@@ -85,23 +86,51 @@ extern string exec(string cmd);
 */
 static void initEnv(void)
 {
-	/// add a action log folder
+    string systemType("uname");
+    auto uType = exec(systemType);
+    FATAL_VAR(uType);
+    if("Darwin\n"== uType)
     {
-        string shell("umount /mnt/vsido/log");
-        int ret = ::system(shell.c_str());
+        /// using bluetooth
+        {
+            string shell("find  /dev/tty* | grep tty.SBDBT");
+            auto result = exec(shell);
+            FATAL_VAR(result);
+            stringstream ss(result);
+            std::string tty;
+            getline(ss, tty);
+            FATAL_VAR(tty);
+            if(tty.size() > 5)
+            {
+                string link("ln -sf ");
+                link += tty;
+                link += " /dev/tty.vsido.link";
+                auto result = exec(link);
+                FATAL_VAR(result);
+            }
+        }
     }
+    else if("Linux\n"== uType)
     {
-        string shell("mkdir -p /mnt/vsido/log");
-        int ret = ::system(shell.c_str());
+        /// add a action log folder
+        {
+            string shell("umount /mnt/vsido/log");
+            int ret = ::system(shell.c_str());
+        }
+        {
+            string shell("mkdir -p /mnt/vsido/log");
+            int ret = ::system(shell.c_str());
+        }
+        {
+            string shell("mount -t tmpfs -o size=2M tmpfs /mnt/vsido/log");
+            int ret = ::system(shell.c_str());
+        }
+        {
+            string shell("sync");
+            int ret = ::system(shell.c_str());
+        }
     }
-    {
-        string shell("mount -t tmpfs -o size=2M tmpfs /mnt/vsido/log");
-        int ret = ::system(shell.c_str());
-    }
-    {
-        string shell("sync");
-        int ret = ::system(shell.c_str());
-    }
+
 	
 	
 	string systemInfo("uname -n");
@@ -109,18 +138,6 @@ static void initEnv(void)
 	FATAL_VAR(uname);
 	if("raspberrypi\n"== uname)
 	{
-#if 0 // next step
-		/// using bluetooth.
-		{
-			string shell("hciconfig ");
-	        auto result = exec(shell);
-	    	FATAL_VAR(result);
-			if(result.size())
-			{
-				
-			}
-		}
-#endif
 		/// using AMA0
 		{
 			string shell("find  /dev/tty* | grep ttyAMA0");
@@ -134,7 +151,7 @@ static void initEnv(void)
 			}
 		}
 	}
-	else
+	else if("edison\n"== uname)
 	{
         string shell("/home/sysroot/usr/bin/btsetup");
         auto result = exec(shell);
@@ -144,6 +161,10 @@ static void initEnv(void)
 			auto result = exec(link);
 			FATAL_VAR(result);
 		}
+    }
+    else
+    {
+        
     }
 }
 

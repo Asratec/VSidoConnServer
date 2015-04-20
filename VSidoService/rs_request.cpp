@@ -80,7 +80,7 @@ void RSRequest::operator()()
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = htons(INADDR_ANY);
 	servaddr.sin_port = htons(22000);
-	int ret = bind(listen_fd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+    int ret = ::bind(listen_fd, (struct sockaddr *) &servaddr,sizeof(servaddr));
 	if(0 > ret)
 	{
         DUMP_VAR(ret);

@@ -50,7 +50,8 @@ Request::Request()
 ,_length(0x4)
 ,_sum(0x0)
 ,_uart{}
-,_expect(new ResponseAck({0xff}))
+,_expect(nullptr)
+//,_expect(new ResponseAck({0xff}))
 {
 }
 

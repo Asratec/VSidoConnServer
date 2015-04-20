@@ -65,6 +65,12 @@ public:
 	{
 		_expect = expect;
 	}
+    
+    virtual ~Response()
+    {
+        cout << __FILE__ << ":" << __LINE__ << endl;
+    };
+
 	
 protected:
 	/** コンストラクタ

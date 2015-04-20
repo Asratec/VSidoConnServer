@@ -83,6 +83,10 @@ Dispatcher::Dispatcher(UARTSend &send)
 #include <string>
 #include <iostream>
 
+#define logReq(...)
+#define logRes(...)
+
+#if 0
 static int gLogID = 0;
 extern string exec(string cmd);
 static void logReq(const string &req)
@@ -113,7 +117,7 @@ static void logRes(const string &res)
 	out << res;
     out.close();
 }
-
+#endif
 
 
 /** 要求を追加する

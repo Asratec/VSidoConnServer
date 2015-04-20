@@ -12,7 +12,7 @@ build: websockets pre-build
 	
 pre-build:
 	mkdir -p $(OBJROOT)
-	cd $(OBJROOT) && cmake -DCMAKE_INSTALL_PREFIX=$(PACKROOT)  $(SRCROOT)\
+	cd $(OBJROOT) && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$(PACKROOT)  $(SRCROOT)\
 	
 
 install: websockets pre-build

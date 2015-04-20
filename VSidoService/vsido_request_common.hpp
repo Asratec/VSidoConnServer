@@ -66,6 +66,8 @@ public:
 	{
 		return _expect;
 	}
+    
+    virtual ~Request(){};
 
 protected:
 	/** コンストラクタ
