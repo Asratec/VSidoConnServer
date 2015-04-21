@@ -52,7 +52,9 @@ RequestServoInfo::RequestServoInfo(picojson::object &raw)
 ,_raw(raw)
 {
 	_cmd = (unsigned char)'d';
-	_expect = shared_ptr<Response>(new ResponseServoInfo({0xff}));
+//	_expect = shared_ptr<Response>(new ResponseServoInfo({0xff}));
+	const list<unsigned char> uart = {};
+	_expect = make_shared<ResponseServoInfo>(uart);
 }
 
 /** Json要求からVSidoパケットへ変換する

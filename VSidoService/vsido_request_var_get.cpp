@@ -52,7 +52,9 @@ RequestVarGet::RequestVarGet(picojson::object &raw)
 ,_raw(raw)
 {
 	_cmd = (unsigned char)'c';
-	_expect = shared_ptr<Response>(new ResponseVarGet({0xff}));
+//	_expect = shared_ptr<Response>(new ResponseVarGet({0xff}));
+	const list<unsigned char> uart = {};
+	_expect = make_shared<ResponseVarGet>(uart);
 }
 
 /** Json要求からVSidoパケットへ変換する

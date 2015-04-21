@@ -177,7 +177,18 @@ static void initEnv(void)
 int main(int argc ,char *argv[])
 {
 	/// 実行環境の準備
-    initEnv();
+	if(2 < argc )
+	{
+		string link("ln -sf ");
+		link += string(argv[1]);
+		link += "/dev/tty.vsido.link";
+		auto result = exec(link);
+		FATAL_VAR(result);
+	}
+	else
+	{
+    	initEnv();
+	}
     UARTSend send;
 	Dispatcher dispath(send);
 	/// ユーザー操作からVSidoConnectorまで情報伝達経路

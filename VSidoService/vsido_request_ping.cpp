@@ -48,7 +48,9 @@ RequestPing::RequestPing(picojson::object &raw)
 ,_raw(raw)
 {
 	_cmd = (unsigned char)'j';
-	_expect = shared_ptr<Response>(new ResponsePing({0xff}));
+//	_expect = shared_ptr<Response>(new ResponsePing({0xff}));
+	const list<unsigned char> uart = {};
+	_expect = make_shared<ResponsePing>(uart);
 }
 
 

@@ -114,12 +114,9 @@ void WSResponse::ack(const string &msg)
 				return;
 			}
 		}
-        FATAL_VAR(msg.size());
-        unsigned char *data = new unsigned char [msg.size()];
-        memcpy(data,msg.c_str(),msg.size());
-		auto ret = libwebsocket_write(this->_wsi, data, msg.size(), LWS_WRITE_TEXT);
-		FATAL_VAR(ret);
-        FATAL_VAR(msg.size());
+        unsigned char *data = new unsigned char [LWS_SEND_BUFFER_PRE_PADDING + msg.size() + LWS_SEND_BUFFER_POST_PADDING];
+        memcpy(&data[LWS_SEND_BUFFER_PRE_PADDING],msg.c_str(),msg.size());
+		auto ret = libwebsocket_write(this->_wsi, &data[LWS_SEND_BUFFER_PRE_PADDING], msg.size(), LWS_WRITE_TEXT);
         if(ret < msg.size())
 		{
 			FATAL_VAR(this->_wsi);

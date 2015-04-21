@@ -53,6 +53,8 @@ Request::Request()
 ,_expect(nullptr)
 //,_expect(new ResponseAck({0xff}))
 {
+	const list<unsigned char> uart = {};
+	_expect = make_shared<ResponseAck>(uart);
 }
 
 

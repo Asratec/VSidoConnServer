@@ -73,7 +73,9 @@ RequestIK::RequestIK(picojson::object &raw)
 ,_dist_rot(false)
 {
 	_cmd = (unsigned char)'k';
-	_expect = shared_ptr<Response>(new ResponseIK({0xff}));
+//	_expect = shared_ptr<Response>(new ResponseIK({0xff}));
+	const list<unsigned char> uart = {};
+	_expect = make_shared<ResponseIK>(uart);
 }
 
 /** Json要求からVSidoパケットへ変換する

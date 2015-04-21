@@ -46,7 +46,9 @@ RequestAcceleration::RequestAcceleration(picojson::object &raw)
 ,_raw(raw)
 {
 	_cmd = (unsigned char)'a';
-	_expect = shared_ptr<Response>(new ResponseAcceleration({0xff}));
+//	_expect = shared_ptr<Response>(new ResponseAcceleration({0xff}));
+	const list<unsigned char> uart = {};
+	_expect = make_shared<ResponseAcceleration>(uart);
 }
 
 /** Json要求からVSidoパケットへ変換する

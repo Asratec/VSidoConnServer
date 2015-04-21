@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace std;
 extern mutex _globalLockMtx;
 
-#define DUMP_UART_IO
+//#define DUMP_UART_IO
 
 
 #if 1
@@ -48,7 +48,7 @@ extern mutex _globalLockMtx;
 #endif
 
 
-#if 1
+#if 0
 	#define DUMP_VAR(x) \
 	{	\
 		lock_guard<mutex> lock(_globalLockMtx);\
@@ -60,7 +60,7 @@ extern mutex _globalLockMtx;
 
 
 
-#if 1
+#if 0
 	#define DUMP_VAR_DETAILS(x) \
 	{	\
 		lock_guard<mutex> lock(_globalLockMtx);\

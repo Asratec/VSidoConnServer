@@ -50,7 +50,9 @@ RequestFeedback::RequestFeedback(picojson::object &raw)
 ,_raw(raw)
 {
 	_cmd = (unsigned char)'r';
-	_expect = shared_ptr<Response>(new ResponseFeedback({0xff}));
+//	_expect = shared_ptr<Response>(new ResponseFeedback({0xff}));
+	const list<unsigned char> uart = {};
+	_expect = make_shared<ResponseFeedback>(uart);
 }
 
 /** Json要求からVSidoパケットへ変換する
