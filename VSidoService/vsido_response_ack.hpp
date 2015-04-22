@@ -61,7 +61,7 @@ public:
     
     virtual ~ResponseAck()
     {
-        cout << __FILE__  << ":" << __LINE__ << endl;
+        //cout << __FILE__  << ":" << __LINE__ << endl;
     };
 private:
     ResponseAck(void);

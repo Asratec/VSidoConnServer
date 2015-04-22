@@ -68,7 +68,7 @@ public:
     
     virtual ~Response()
     {
-        cout << __FILE__ << ":" << __LINE__ << endl;
+        //cout << __FILE__ << ":" << __LINE__ << endl;
     };
 
 	
