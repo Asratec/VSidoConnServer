@@ -39,8 +39,8 @@ using namespace std;
 /** コンストラクタ
 * @param[in] raw httpサーバーからのJson要求
 *  {
-*	  "command" : "minmax_angle",
-*	  "servo"   : [
+*	  "cmd" : "minmax",
+*	  "angle"   : [
 	   {"sid":1~127,"min":-1440~1440,"max":-1440~1440}
 *	  ]
 *  }
@@ -61,7 +61,7 @@ list<unsigned char> RequestMinMaxAngle::conv(void)
 	try
 	{
 	//	DUMP_VAR(_raw);
-		auto servo = _raw["servo"].get<picojson::array>();
+		auto servo = _raw["angle"].get<picojson::array>();
 		for (auto it = servo.begin(); it != servo.end(); it++)
 		{
 			auto &tmpObject = it->get<picojson::object>();

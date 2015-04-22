@@ -39,7 +39,7 @@ using namespace std;
 /** コンストラクタ
 * @param[in] raw httpサーバーからのJson要求
 *  {
-*	  "command" : "id_feedback",
+*	  "cmd" : "id_feedback",
 *	  "SIDs"   : [
 	   1~127
 *	  ]

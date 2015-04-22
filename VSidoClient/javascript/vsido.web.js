@@ -257,17 +257,100 @@ var VSidoWeb = function(config){
 		var jsonMsg = {
 			"cmd": "raw",
 			"exec" :[
-			/*
-			 Hex data spilted by [,]
-			 example 0xff,0x74,0x4,0xaa
-			*/
+				/*
+				 Hex data spilted by [,]
+				 example 0xff,0x74,0x4,0xaa
+				*/
 			]
 		};
 		return jsonMsg;
 	}
 
 	/**
+	* コンプライアンス設定コマンドを生成する。
+	* @method compliance
+    * @example
+    * <pre><code>
+	* var comp = vsido.compliance();
+	* comp['comp'].push({'sid':2,'cp1':35,'cp2':21});
+	* </code></pre>
+	**/
+	this.compliance = function() {
+		var jsonMsg = {
+			'cmd': 'comp',
+			'comp' :[
+				/*
+				array of {'sid':1-254,'cp1':1~250,'cp2':1-250}
+				*/
+			]
+		};
+		return jsonMsg;
+	}
+
+	/**
+	* サーボ最小最大可動範囲設定コマンドを生成する。
+	* @method minMaxAngle
+    * @example
+    * <pre><code>
+	* var limit = vsido.minMaxAngle();
+	* limit['angle'].push({'sid':2,'min':-100,'max':100});
+	* </code></pre>
+	**/
+	this.minMaxAngle = function() {
+		var jsonMsg = {
+			'cmd': 'minmax',
+			'angle' :[
+				/*
+				array of {'sid':1-254,'min':-140~+140,'max':-140~+140}
+				*/
+			]
+		};
+		return jsonMsg;
+	}
+	
+	/**
+	* フィードバックID設定コマンドを生成する。
+	* @method feedBackID
+    * @example
+    * <pre><code>
+	* var fbID = vsido.feedBackID();
+	* fbID['SIDs'].push(2);
+	* </code></pre>
+	**/
+	this.feedBackID = function() {
+		var jsonMsg = {
+			'cmd': 'id_feedback',
+			'SIDs' :[
+				/*
+				array of 1-254
+				*/
+			]
+		};
+		return jsonMsg;
+	}
+
+	/**
+	* フィードバック コマンドを生成する。
+	* @method feedBack
+    * @example
+    * <pre><code>
+	* var feed = vsido.feedBack();
+	* feed['address'] = 1;
+	* feed['length'] = 20;
+	* </code></pre>
+	**/
+	this.feedBack = function() {
+		var jsonMsg = {
+			'cmd': 'feedback',
+			'address':0,/* 0~128*/
+			'length':0/* 1~54*/
+		};
+		return jsonMsg;
+	}
+	
+	/**
 	* Bluetoothデバイスをスキャンする。
+	* Only @Intel Edison Board。
 	* @method scanBT
 	* @param {function} 　cb デバイス名、Macアドレス一覧
     * @example
@@ -289,7 +372,8 @@ var VSidoWeb = function(config){
 	}
 
 	/**
-	* Bluetoothデバイスをぺアリングする。 
+	* Bluetoothデバイスをぺアリングする。
+	* Only @Intel Edison Board。
 	* @method bindBT
 	* @param {json} device Macアドレス
     * @example

@@ -40,7 +40,7 @@ using namespace std;
 /** コンストラクタ
 * @param[in] raw httpサーバーからのJson要求
 *  {
-*	  "command" : "feedback",
+*	  "cmd" : "feedback",
 *	  "address" : 1~128, //サーボ情報の先頭アドレス
 *	  "length"  : 1~54,  //サーボ情報の読出し長さ
 *  }
@@ -52,7 +52,8 @@ RequestFeedback::RequestFeedback(picojson::object &raw)
 	_cmd = (unsigned char)'r';
 //	_expect = shared_ptr<Response>(new ResponseFeedback({0xff}));
 	const list<unsigned char> uart = {};
-	_expect = make_shared<ResponseFeedback>(uart);
+	_feed = make_shared<ResponseFeedback>(uart);
+	_expect = dynamic_pointer_cast<Response>(_feed);
 }
 
 /** Json要求からVSidoパケットへ変換する
@@ -68,11 +69,13 @@ list<unsigned char> RequestFeedback::conv(void)
 		DUMP_VAR(add);
 		_uart.push_back((unsigned char)add);
 		_length++;
+		_feed->address((unsigned char)add);
 		
 		auto  length = _raw["length"].get<double>();
 		DUMP_VAR(length);
 		_uart.push_back((unsigned char)length);
 		_length++;
+		_feed->length((unsigned char)length);
 	}
 	catch(const std::runtime_error &e)
 	{

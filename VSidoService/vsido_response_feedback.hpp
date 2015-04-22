@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <list>
 #include <string>
+#include <map>
 using namespace std;
 #include "vsido_response_common.hpp"
 
@@ -58,21 +59,46 @@ public:
 	* 	"feedback":[
 	* 	  {
 	* 	    "sid":1,
-	* 	    "dat": 100
+	* 	    "dat": {}
 	* 	  },
 	* 	  {
 	* 	    "sid":2,
-	* 	    "dat": 200
+	* 	    "dat": {}
 	* 	  }
 	* 	]
 	* }	
 	*/
 	virtual string conv(void);
+
+	/** 返事解析のため、要求のアドレス情報を記憶する
+	* @param dad
+	* @return None
+	*/
+	void address(unsigned char dad)
+	{
+		_dad = dad;
+	}
+
+	/** 返事解析のため、要求のデータ長さ情報を記憶する
+	* @param dad
+	* @return None
+	*/
+	void length(unsigned char dln)
+	{
+		_dln = dln;
+	}
+	
 private:
     ResponseFeedback(void);
 	void splite(void);
+	picojson::object parseDAT(list<unsigned char> &data);
 private:
+	const unsigned int _iConstMaxDataLength = 54;
 	list<list<unsigned char>> _feedbacks;
+	const map<int,string> _fields;
+	unsigned char _dad;
+	unsigned char _dln;
+	unsigned char _width;
 };
 } // namespace VSido
 

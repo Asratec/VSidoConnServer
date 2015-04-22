@@ -134,7 +134,7 @@ shared_ptr<Request>RequestParser::create(void)
 		{
 			return shared_ptr<Request>(new RequestCompliance(_rawObj));
 		}
-		else if("minmax_angle" == cmdStr)
+		else if("minmax" == cmdStr)
 		{
 			return shared_ptr<Request>(new RequestMinMaxAngle(_rawObj));
 		}

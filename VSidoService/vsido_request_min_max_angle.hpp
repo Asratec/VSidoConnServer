@@ -48,8 +48,8 @@ public:
 	/** コンストラクタ
 	* @param[in] raw httpサーバーからのJson要求
 	*  {
-	*	  "command" : "minmax_angle",
-	*	  "servo"   : [
+	*	  "cmd" : "minmax",
+	*	  "angle"   : [
 		   {"sid":1~127,"min":-1440~1440,"max":-1440~1440}
 	*	  ]
 	*  }

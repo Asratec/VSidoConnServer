@@ -39,7 +39,8 @@ using namespace std;
 
 namespace VSido
 {
-	
+
+class ResponseFeedback;
 /**
 * フィードバック要求
 */
@@ -49,7 +50,7 @@ public:
 	/** コンストラクタ
 	* @param[in] raw httpサーバーからのJson要求
 	*  {
-	*	  "command" : "feedback",
+	*	  "cmd" : "feedback",
 	*	  "address" : 1~128, //サーボ情報の先頭アドレス
 	*	  "length"  : 1~54,  //サーボ情報の読出し長さ
 	*  }
@@ -65,6 +66,7 @@ private:
     RequestFeedback(void);
 private:
     picojson::object &_raw;
+	shared_ptr<ResponseFeedback> _feed;
 };
 } // namespace VSido
 

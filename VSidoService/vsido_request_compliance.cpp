@@ -63,7 +63,7 @@ list<unsigned char> RequestCompliance::conv(void)
 	try
 	{
 	//	DUMP_VAR(_raw);
-		auto servo = _raw["servo"].get<picojson::array>();
+		auto servo = _raw["comp"].get<picojson::array>();
 		for (auto it = servo.begin(); it != servo.end(); it++)
 		{
 			auto &tmpObject = it->get<picojson::object>();
