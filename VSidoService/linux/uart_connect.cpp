@@ -34,6 +34,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <termios.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <unistd.h>
+
 #include <stdio.h>
 #include <string>
 #include <thread>
@@ -81,6 +88,11 @@ UARTConnect::operator int() const
 static struct termios oldtio;
 static struct termios newtio;
 
+#ifndef N_HCI
+#define N_HCI	15
+#endif
+
+
 /** SPPを開く
 * @return None
 */
@@ -105,12 +117,14 @@ void UARTConnect::openSPP()
     newtio = oldtio;
 	
 	dumpUartFlags(newtio);
-	
+
+#if 1	
 	newtio.c_iflag |=  IGNBRK;
 	newtio.c_iflag &= ~(ICRNL | IXON);
 	
 
 	newtio.c_cflag = B115200 | CS8 | CLOCAL | CREAD;
+//	newtio.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
     newtio.c_lflag = 0;
 
 	newtio.c_cc[VMIN] = 1;
@@ -118,10 +132,31 @@ void UARTConnect::openSPP()
 	
 	newtio.c_oflag &= ~(ONLCR);
 
+#endif
+
+#if 0
+	cfsetispeed(&newtio, B115200);
+	cfsetospeed(&newtio, B115200);
+	cfmakeraw(&newtio);
+	newtio.c_cflag |= (CLOCAL | CREAD);
+	newtio.c_cflag &= ~CRTSCTS;	
+#endif	
+
 	dumpUartFlags(newtio);
 
     tcsetattr(_uart, TCSANOW, &newtio);
     DUMP_VAR(_uart);
+
+	struct termios setted;
+	tcgetattr( _uart, &setted );
+	dumpUartFlags(setted);
+	
+	int ldisc = N_HCI;
+	
+	if (ioctl(_uart, TIOCSETD, &ldisc) < 0)
+	{
+		perror("Failed set serial line discipline");
+	}
 
 }
 
@@ -158,6 +193,10 @@ void UARTConnect::closeSPP()
 void dumpUartFlags(termios term)
 {
     FATAL_VAR(&term);
+
+    FATAL_VAR(cfgetispeed(&term));
+    FATAL_VAR(cfgetospeed(&term));
+//    FATAL_VAR(cfgetspeed(&term));
 	
 	DUMP_FLAGS(term.c_iflag,IGNBRK);
 	DUMP_FLAGS(term.c_iflag,BRKINT);

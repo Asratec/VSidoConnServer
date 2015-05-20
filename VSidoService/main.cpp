@@ -150,6 +150,29 @@ static void initEnv(void)
 				FATAL_VAR(result);
 			}
 		}
+		/// check BT ,if has a HCI Mode dongle will using BLUE Tooth 
+		{
+			/// wait 5 secend for usb dongle.
+			{
+				string shell("sleep 5;lsusb;hciconfig;");
+		        auto result = exec(shell);
+		    	FATAL_VAR(result);
+			}
+			string shell("hciconfig | grep \"BD Address:\"");
+	        auto result = exec(shell);
+	    	FATAL_VAR(result);
+			if(result.size() > 5)
+			{
+		        string shellBT("/opt/vsido/usr/bin/btsetup");
+		        auto result = exec(shellBT);
+		    	FATAL_VAR(result);
+				{
+					string link("ln -sf /dev/rfcomm75 /dev/tty.vsido.link");
+					auto result = exec(link);
+					FATAL_VAR(result);
+				}
+			}
+		}
 	}
 	else if("edison\n"== uname)
 	{
