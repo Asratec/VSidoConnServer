@@ -70,7 +70,21 @@ string RequestBindBT::runTask(void)
 {
 	BTWatchDog::notifyBTBindBegin();
 
-	string cmd("/home/sysroot/usr/bin/btsetup ");
+	string cmd("/opt/vsido/usr/bin/btsetup ");
+	
+	string systemInfo("uname -n");
+    auto uname = exec(systemInfo);
+	FATAL_VAR(uname);
+	if("edison\n"== uname)
+	{
+        cmd = string("/home/sysroot/usr/bin/btsetup ");
+	}
+    else
+    {
+        
+    }
+	
+	
 	try
 	{
 	//	DUMP_VAR(_raw);

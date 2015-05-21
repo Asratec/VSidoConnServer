@@ -106,7 +106,18 @@ static vector<string> split(const string &str, char delim)
 */
 string RequestScanBT::runTask(void)
 {
-	auto result = exec("/home/sysroot/usr/bin/btscan");
+	string systemInfo("uname -n");
+    auto uname = exec(systemInfo);
+	FATAL_VAR(uname);
+	string result;
+	if("edison\n"== uname)
+	{
+		result = exec("/home/sysroot/usr/bin/btscan");
+	}
+    else
+    {
+        result = exec("/opt/vsido/usr/bin/btscan");
+    }
 	DUMP_VAR(result);
 	
 	auto devices = split(result,'\n');
