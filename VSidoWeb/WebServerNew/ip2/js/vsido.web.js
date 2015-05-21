@@ -257,19 +257,17 @@ var VSidoWeb = function(config){
 		var jsonMsg = {
 			"cmd": "raw",
 			"exec" :[
-				/*
-				 Hex data spilted by [,]
-				 example 0xff,0x74,0x4,0xaa
-				*/
+			/*
+			 Hex data spilted by [,]
+			 example 0xff,0x74,0x4,0xaa
+			*/
 			]
 		};
 		return jsonMsg;
 	}
 
-	
 	/**
 	* Bluetoothデバイスをスキャンする。
-	* Only @Intel Edison Board。
 	* @method scanBT
 	* @param {function} 　cb デバイス名、Macアドレス一覧
     * @example
@@ -291,8 +289,7 @@ var VSidoWeb = function(config){
 	}
 
 	/**
-	* Bluetoothデバイスをぺアリングする。
-	* Only @Intel Edison Board。
+	* Bluetoothデバイスをぺアリングする。 
 	* @method bindBT
 	* @param {json} device Macアドレス
     * @example
