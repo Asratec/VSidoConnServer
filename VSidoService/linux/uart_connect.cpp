@@ -119,7 +119,7 @@ void UARTConnect::openSPP()
 	dumpUartFlags(newtio);
 
 #if 1	
-	newtio.c_iflag |=  IGNBRK;
+	newtio.c_iflag |=  IGNBRK | IGNPAR;
 	newtio.c_iflag &= ~(ICRNL | IXON);
 	
 
@@ -127,6 +127,10 @@ void UARTConnect::openSPP()
 //	newtio.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
     newtio.c_lflag = 0;
 
+	
+    newtio.c_ispeed = B115200;
+    newtio.c_ospeed = B115200;
+	
 	newtio.c_cc[VMIN] = 1;
 	newtio.c_cc[VTIME] = 1;
 	

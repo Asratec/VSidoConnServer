@@ -164,8 +164,10 @@ static void initEnv(void)
 			if(result.size() > 5)
 			{
 		        string shellBT("/opt/vsido/usr/bin/btsetup");
-		        auto result = exec(shellBT);
-		    	FATAL_VAR(result);
+				system(shellBT.c_str());
+				/// blocked at read pipe us system. do not see result.
+//		        auto result = exec(shellBT);
+//		    	FATAL_VAR(result);
 				{
 					string link("ln -sf /dev/rfcomm75 /dev/tty.vsido.link");
 					auto result = exec(link);
