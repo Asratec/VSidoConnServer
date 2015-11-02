@@ -27,17 +27,18 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "uart_send.hpp"
-#include "uart_read.hpp"
 #include "ws_request.hpp"
 #include "ws_response.hpp"
 #include "dispatch.hpp"
-#include "vsido_request_parser.hpp"
+#include "cmd_parser.hpp"
 using namespace VSido;
 
 #include <string>
+#include <map>
+#include <vector>
 #include <iostream>
 #include <list>
+#include <thread>
 using namespace std;
 #include <cstdlib>
 #include <sys/types.h>
@@ -60,8 +61,147 @@ static WSRequest *globalRequest = nullptr;
 
 #include <libwebsockets.h>
 
+
+
+
+
+mutex mtxWSMotionConnection;
+list<struct libwebsocket *> wsMotionCallbacks;
+
+mutex mtxWSMotionAck;
+map<libwebsocket *,list<string>> globalMotionAckList;
+
+
+
+/** WebSocketの受信メッセージを処理する
+* @param name モデル名
+* @param ws WebSocket
+* @return None
+*/
+extern void handleMotionMsg(const string &msg,libwebsocket *ws);
+
+
+static int callback_vsido_motion(struct libwebsocket_context * ctx,
+                                   struct libwebsocket *wsi,
+                                   enum libwebsocket_callback_reasons reason,
+                                   void *user, void *inMsg, size_t lenMsg)
+{
+	DUMP_VAR(reason);
+    switch (reason)
+	{
+        case LWS_CALLBACK_ESTABLISHED: // just log message that someone is connecting
+    	{
+            printf("connection established\n");
+    		
+    		
+    		/// 設定タイムアウト
+			struct timeval timeout;      
+			timeout.tv_sec = 0;
+			timeout.tv_usec = 1000 * 100;
+			int sockfd = libwebsocket_get_socket_fd(wsi);
+			if(0 > sockfd)
+			{
+        		perror("libwebsocket_get_socket_fd\n");
+			}
+			else
+			{
+				printf("%s,%d,sockfd=<%d>\n",__FILE__,__LINE__,sockfd);
+			}
+			if(setsockopt (sockfd, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout,sizeof(timeout)) < 0)
+			{
+        		perror("setsockopt failed\n");
+			}
+    		if(nullptr != wsi)
+    		{
+    			lock_guard<mutex> lock(mtxWSMotionConnection);
+    			wsMotionCallbacks.push_back(wsi);
+    		}
+            break;
+    	}
+        case LWS_CALLBACK_RECEIVE:
+    	{
+        	if(nullptr == wsi)
+        	{
+        		DUMP_VAR(wsi);
+        		return 0;
+        	}
+        	string msgStr((const char*)inMsg,lenMsg);
+        	try
+        	{
+				DUMP_VAR_DETAILS(user);
+        		handleMotionMsg(msgStr,wsi);
+        	}
+        	catch(...)
+        	{
+        		printf("LWS_CALLBACK_RECEIVE exception %s:%d\n",__FILE__,__LINE__);
+        	}
+			usleep(1000*5);
+            break;
+        }
+		case LWS_CALLBACK_SERVER_WRITEABLE:
+		{
+			printf("LWS_CALLBACK_SERVER_WRITEABLE\n");
+			lock_guard<mutex> lock(mtxWSMotionAck);
+			auto queAck = globalMotionAckList.find(wsi);
+			if(globalMotionAckList.end() == queAck)
+			{
+				break;
+			}
+			if(queAck->second.empty())
+			{
+				break;
+			}
+			auto msg = queAck->second.front();
+	        unsigned char *data = new unsigned char [LWS_SEND_BUFFER_PRE_PADDING + msg.size() + LWS_SEND_BUFFER_POST_PADDING];
+	        memcpy(&data[LWS_SEND_BUFFER_PRE_PADDING],msg.c_str(),msg.size());
+			auto ret = libwebsocket_write(wsi, &data[LWS_SEND_BUFFER_PRE_PADDING], msg.size(), LWS_WRITE_TEXT);
+	        if(ret < msg.size())
+			{
+				FATAL_VAR(wsi);
+			}
+	        delete []data;
+			usleep(1000*5);
+			libwebsocket_callback_on_writable(ctx,wsi);
+			queAck->second.pop_front();
+			break;
+		}
+    	case LWS_CALLBACK_CLOSED:
+    	{
+            printf("connection closed\n");
+        	DUMP_VAR(wsi);
+        	if(nullptr == wsi)
+        	{
+        		return 0;
+        	}
+    		{
+    			lock_guard<mutex> lock(mtxWSMotionConnection);
+    			wsMotionCallbacks.remove(wsi);
+    		}
+    		{
+				lock_guard<mutex> lock(mtxWSMotionAck);
+				auto queAck = globalMotionAckList.find(wsi);
+	    		if(queAck != globalMotionAckList.end())
+	    		{
+	    			globalMotionAckList.erase(queAck);
+	    		}
+    		}
+    		break;
+    	}
+    	default:
+            break;
+    }
+   
+   
+    return 0;
+}
+
+
+
 mutex mtxWSConnection;
 list<struct libwebsocket *> wsCallbacks;
+
+mutex mtxWSAck;
+map<libwebsocket *,list<string>> globalAckList;
 
 
 static int callback_http(struct libwebsocket_context * ctx,
@@ -77,7 +217,7 @@ static int callback_vsido_cmd(struct libwebsocket_context * ctx,
                                    enum libwebsocket_callback_reasons reason,
                                    void *user, void *inMsg, size_t lenMsg)
 {
-   
+	DUMP_VAR(reason);
     switch (reason)
 	{
         case LWS_CALLBACK_ESTABLISHED: // just log message that someone is connecting
@@ -126,8 +266,36 @@ static int callback_vsido_cmd(struct libwebsocket_context * ctx,
         	{
         		printf("LWS_CALLBACK_RECEIVE exception %s:%d\n",__FILE__,__LINE__);
         	}
+			usleep(1000*5);
             break;
         }
+		case LWS_CALLBACK_SERVER_WRITEABLE:
+		{
+			printf("LWS_CALLBACK_SERVER_WRITEABLE\n");
+			lock_guard<mutex> lock(mtxWSAck);
+			auto queAck = globalAckList.find(wsi);
+			if(globalAckList.end() == queAck)
+			{
+				break;
+			}
+			if(queAck->second.empty())
+			{
+				break;
+			}
+			auto msg = queAck->second.front();
+	        unsigned char *data = new unsigned char [LWS_SEND_BUFFER_PRE_PADDING + msg.size() + LWS_SEND_BUFFER_POST_PADDING];
+	        memcpy(&data[LWS_SEND_BUFFER_PRE_PADDING],msg.c_str(),msg.size());
+			auto ret = libwebsocket_write(wsi, &data[LWS_SEND_BUFFER_PRE_PADDING], msg.size(), LWS_WRITE_TEXT);
+	        if(ret < msg.size())
+			{
+				FATAL_VAR(wsi);
+			}
+	        delete []data;
+			usleep(1000*5);
+			libwebsocket_callback_on_writable(ctx,wsi);
+			queAck->second.pop_front();
+			break;
+		}
     	case LWS_CALLBACK_CLOSED:
     	{
             printf("connection closed\n");
@@ -140,6 +308,14 @@ static int callback_vsido_cmd(struct libwebsocket_context * ctx,
     			lock_guard<mutex> lock(mtxWSConnection);
     			wsCallbacks.remove(wsi);
     		}
+    		{
+				lock_guard<mutex> lock(mtxWSAck);
+				auto queAck = globalAckList.find(wsi);
+	    		if(queAck != globalAckList.end())
+	    		{
+	    			globalAckList.erase(queAck);
+	    		}
+    		}
     		break;
     	}
     	default:
@@ -149,6 +325,10 @@ static int callback_vsido_cmd(struct libwebsocket_context * ctx,
    
     return 0;
 }
+
+
+
+
 
 static struct libwebsocket_protocols protocols[] = 
 {
@@ -161,6 +341,12 @@ static struct libwebsocket_protocols protocols[] =
     {
         "vsido-cmd", // protocol name - very important!
         callback_vsido_cmd,   // callback
+        0                          // we don't use any per session data
+
+    },
+    {
+        "vsido-motion", // protocol name - very important!
+        callback_vsido_motion,   // callback
         0                          // we don't use any per session data
 
     },
@@ -208,6 +394,7 @@ void WSRequest::operator()()
 	while (true)
 	{
 		libwebsocket_service(context, 100);
+		this_thread::yield();
 	}
 
 	libwebsocket_context_destroy(context);

@@ -35,14 +35,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <tuple>
 #include <memory>
 using namespace std;
-#include "uart_connect.hpp"
 
 namespace VSido
 {
-class UARTSend;
-class UARTRead;
-class UARTConnect;
-
 /**
  * Bluetooth接続管理
  */
@@ -50,10 +45,8 @@ class BTWatchDog
 {
 public:
 	/** コンストラクタ
-	* @param send VSidoと繋がるURATの送信
-	* @param read VSidoと繋がるURATの受信
 	*/
-    BTWatchDog(UARTSend &send,UARTRead &read);
+    BTWatchDog(void);
 	
 	
 	/** スレッド本体
@@ -72,15 +65,7 @@ public:
 	static void notifyBTBindEnd(void);
 	
 private:
-	/** コンストラクタ
-	* @return None
-	*/
-	BTWatchDog();
-	
 private:
-	UARTSend &_send;
-	UARTRead &_read;
-	UARTConnect _conn;
 };
 } // namespace VSido
 

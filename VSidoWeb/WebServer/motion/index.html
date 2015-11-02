@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf8">
+    <title>VSido Web App Sample</title>
+    <!-- Viewport mobile tag for sensible mobile support -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<!--meta name="viewport" content="user-scalable=no"-->
+
+    <!--STYLES-->
+    <link rel="stylesheet" href="/styles/importer.css">
+    <link rel="stylesheet" href="/styles/jquery.mobile-1.4.5.min.css">
+    <link rel="stylesheet" href="/styles/vsido.connection.css">
+    <link rel="stylesheet" href="/styles/vsido.hand.css">
+    <link rel="stylesheet" href="/styles/vsido.layout.css">
+    <link rel="stylesheet" href="/styles/vsido.walk.css">
+    <!--STYLES END-->
+    
+	<!--SCRIPTS-->
+<script src="/js/jquery-2.1.1.min.js"></script>
+<script src="/js/jquery.mobile-1.4.5.min.js"></script>
+<script src="/js/vsido.motion.js"></script>
+<!--SCRIPTS END-->
+	
+	
+  </head>
+
+  <body>
+    <a href="/" target="_self">トップに戻る</a>
+
+<style type="text/css">
+<!--
+.add {
+ width:50px;
+}
+.length {
+ width:50px;
+}
+-->
+</style>	
+	
+	
+<script type="text/javascript">
+
+var vsido = new VSidoMotion();
+
+function startMotion(e) {
+	console.log(e);
+	console.log(e.name);
+	$(function(){
+		if(e.name) {
+			var start = new vsido.Start();
+			var allfile = e.name.split(",");
+			console.log(allfile);
+			if(allfile[0]) {
+				start['id'] = allfile[0];
+			}
+			if(allfile[1])
+			{
+				start['loop'] = true;
+			}
+			$("#vsido_output_request").text('send:<'+JSON.stringify(start)+'>');
+			vsido.send(start,function(response){
+				console.log(JSON.stringify(response));
+				$("#vsido_output_response").text(
+					'response:<' + JSON.stringify(response) + '>'
+				);
+			});
+		}
+	});
+}
+
+$(function(){
+
+	function fillTable(jsnMotionList) {
+		$('#vsido_motion_tbody').empty();
+		$('#vsido_motion_tbody').append('<tr><th>名称</th><th></th><th></th></tr>');
+		console.log($('#vsido_motion_tbody').html());
+		if(jsnMotionList['id']){
+			jsnMotionList['id'].forEach( function( id) {
+				console.log(id);
+				$('#vsido_motion_tbody').append('<tr>');
+				$('#vsido_motion_tbody').append('<td>' + id + '</td>');
+				$('#vsido_motion_tbody').append('<td><input type="button" value="開始"' +
+						'onclick="startMotion(this)"' + 
+						'name="' + id+'"></td>');
+				$('#vsido_motion_tbody').append('<td><input type="button" value="開始(繰り返し)"' +
+						'onclick="startMotion(this)"' + 
+						'name="' + id + ',loop' + '"' +
+						'></td>');
+				$('#vsido_motion_tbody').append('/<tr>');
+			});
+		}
+	}
+	
+	var emptyMotionList = {'id':[]};
+	fillTable(emptyMotionList);
+
+	$("#start").click(function(){
+		var start = new vsido.Start();
+		start['loop'] = true;
+		$("#vsido_output_request").text('send:<'+JSON.stringify(start)+'>');
+		vsido.send(start,function(response){
+			console.log(JSON.stringify(response));
+			$("#vsido_output_response").text(
+				'response:<' + JSON.stringify(response) + '>'
+			);
+		});
+	});
+	$("#list").click(function(){
+		var list = new vsido.List();
+		$("#vsido_output_request").text('send:<'+JSON.stringify(list)+'>');
+		vsido.send(list,function(response){
+			console.log(JSON.stringify(response));
+			$("#vsido_output_response").text(
+				'response:<' + JSON.stringify(response) + '>'
+			);
+			fillTable(response);
+		});
+	});
+	$("#stop").click(function(){
+		var stop = new vsido.Stop();
+		$("#vsido_output_request").text('send:<'+JSON.stringify(stop)+'>');
+		vsido.send(stop,function(response){
+			console.log(JSON.stringify(response));
+			$("#vsido_output_response").text(
+				'response:<' + JSON.stringify(response) + '>'
+			);
+		});
+	});
+
+	$("#upload").change(function(evt){
+		var file = evt.target.files[0];
+		console.log(file);
+		if(file) {
+			// delete extension of xml
+			var name = file.name.replace('.xml','');
+			var reader = new FileReader();
+			reader.onload = function(e) { 
+				var contents = e.target.result;
+				console.log(contents);
+				var xmlDoc = jQuery.parseXML(contents);
+				var xmlText = new XMLSerializer().serializeToString(xmlDoc);
+				console.log(xmlText);
+				vsido.UploadMotion(name,xmlText,function(response){
+						console.log(JSON.stringify(response));
+						$("#vsido_output_response").text(
+							'response:<' + JSON.stringify(response) + '>'
+						);
+				});
+				// $("#vsido_output_request").text('send:<'+JSON.stringify(upload)+'>');
+			}
+			reader.readAsText(file);
+		}
+	});
+	
+});
+</script>
+
+
+	<div class="vsido_div_top">
+	   <label>モーション再生:</lable>
+	</div>
+	
+	<br>
+	<div>
+		<input type="button" id="start" value="開始(頭のモーションの繰り返し。)" />
+	</div>
+	<br>
+
+	<br>
+	<div>
+		<input type="button" id="list" value="モーションリスト表示" />
+		<table id="vsido_motion_table" border="1" align="center">
+			<col width="400px" />
+			<col width="100px" />
+			<col width="100px" />
+			<tbody id="vsido_motion_tbody">
+			</tbody>
+		</table>
+	</div>
+	<br>
+
+	
+	<br>
+	<div>
+		<input type="button" id="stop" value="停止" />
+	</div>
+	<br>
+
+	<br>
+
+
+	
+	<br>
+	<div>
+		<label>モーションファイルをアップロードする</label>
+		<input type="file" id="upload" name ="モーションファイル" />
+	</div>
+	<br>
+
+
+   <div id="vsido_div_top">
+     <label>要求<label/>
+     <div id="vsido_output_request"></div>
+     <label>返事<label/>
+     <div id="vsido_output_response"></div>
+   </div>
+	
+  </body>
+</html>

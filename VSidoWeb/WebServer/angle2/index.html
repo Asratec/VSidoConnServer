@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf8">
+    <title>VSido Web App Sample</title>
+    <!-- Viewport mobile tag for sensible mobile support -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<!--meta name="viewport" content="user-scalable=no"-->
+
+    <!--STYLES-->
+    <link rel="stylesheet" href="/styles/importer.css">
+    <link rel="stylesheet" href="/styles/jquery.mobile-1.4.5.min.css">
+    <link rel="stylesheet" href="/styles/vsido.connection.css">
+    <link rel="stylesheet" href="/styles/vsido.hand.css">
+    <link rel="stylesheet" href="/styles/vsido.layout.css">
+    <link rel="stylesheet" href="/styles/vsido.walk.css">
+    <!--STYLES END-->
+    
+	<!--SCRIPTS-->
+<script src="/js/jquery-2.1.1.min.js"></script>
+<script src="/js/jquery.mobile-1.4.5.min.js"></script>
+<script src="/js/vsido.client.api.js"></script>
+<script src="/js/vsido.ui.js"></script>
+<!--SCRIPTS END-->
+	
+	
+  </head>
+
+  <body>
+    <a href="/" target="_self">トップに戻る</a>
+
+    <script type="text/javascript">
+$(function(){
+  var connect = new vsido.Connect();
+	createServoAngleTable();
+	$("#setAngle").click(function(){
+		var angle = new vsido.SetServoAngle(100);
+		for (i = 1; i < CONST_SERVO_MAX +1; i = i +1){
+			var req = getAngleValue(i,angle);
+			console.log(req);
+			if(req != null) {
+				console.log(req['sid']);
+				console.log(req['angle']);
+				angle.addAngle(req['sid'],req['angle']);
+			}
+		}
+		$("#vsido_output_request").text('send:<'+JSON.stringify(angle)+'>');
+		connect.send(angle,function(response){
+			console.log(JSON.stringify(response));
+			$("#vsido_output_response").text(
+				'response:<' + JSON.stringify(response) + '>'
+			);
+		});
+	});
+
+	$("#getAngle").click(function(){
+		var angle = new vsido.GetServoAngle();
+		for (i = 1; i < CONST_SERVO_MAX +1; i = i +1){
+			var req = getValue(i);
+			if(req != null) {
+				angle.addSID(req);
+			}
+		}
+		$("#vsido_output_request").text('send:<'+JSON.stringify(angle)+'>');
+		connect.send(angle,function(response){
+			console.log(JSON.stringify(response));
+			$("#vsido_output_response").text(
+				'response:<' + JSON.stringify(response) + '>'
+			);
+			for(var j in response['servo']) {
+				console.log(JSON.stringify(response['servo'][j]));
+				setAngleValue(response['servo'][j]['sid'],response['servo'][j]['angle']);
+			}
+		});
+	});
+
+	$("#all_select").click(function(){
+		for (i = 1; i < CONST_SERVO_MAX +1; i = i +1){
+			checkOn(i);
+		}
+	});
+});
+</script>
+
+
+<div class="vsido_div_top">
+   <label>目標角度設定2:</label>
+	<br>
+	<div>
+		<input type="button" id="all_select" value="すべて選択" />
+		<input type="button" id="setAngle" value="角度設定" />
+		<input type="button" id="getAngle" value="角度取得" />
+	</div>
+	<br>
+	<table id="servoTable" border="1" bordercolor="#7f0000">
+	<tbody></tbody>
+	</table>
+	<br>
+</div>
+
+
+   <div id="vsido_div_top">
+     <label>要求<label/>
+     <div id="vsido_output_request"></div>
+     <label>返事<label/>
+     <div id="vsido_output_response"></div>
+   </div>
+	
+  </body>
+</html>

@@ -20,13 +20,7 @@
 	<!--SCRIPTS-->
 <script src="/js/jquery-2.1.1.min.js"></script>
 <script src="/js/jquery.mobile-1.4.5.min.js"></script>
-<script src="/js/vsido.camera.js"></script>
-<script src="/js/vsido.canvas.acceleration.js"></script>
-<script src="/js/vsido.canvas.hand.js"></script>
-<script src="/js/vsido.canvas.joystick.js"></script>
-<script src="/js/vsido.canvas.js"></script>
-<script src="/js/vsido.canvas.sensorstick.js"></script>
-<script src="/js/vsido.web.js"></script>
+<script src="/js/vsido.client.api.js"></script>
 <!--SCRIPTS END-->
 	
 	
@@ -36,11 +30,10 @@
     <a href="/" target="_self">トップに戻る</a>
 
     <script type="text/javascript">
-	var vsido = new VSidoWeb();
+	var connect = new vsido.Connect();
 	$(function(){
 		$('#vsido_raw_send').click(function(){
-			var raw = vsido.execRaw();
-			$("#vsido_output_request").text('send:<'+JSON.stringify(raw)+'>');
+			var raw = new vsido.execRaw();
 			console.log($('#vsido_raw_console').val());
 			console.log(typeof($('#vsido_raw_console').val()));
 			var bytes = $('#vsido_raw_console').val().split(',');
@@ -49,7 +42,22 @@
 				console.log(byte);
 				raw['exec'].push(parseInt(byte,16));
 			});
-			vsido.send(raw);
+			$("#vsido_output_request").text('send:<'+JSON.stringify(raw)+'>');
+			connect.send(raw);
+		});
+
+		$('#vsido_raw_send_auto').click(function(){
+			console.log($('#vsido_raw_console_operate').val());
+			var bin = new vsido.Binary($('#vsido_raw_console_operate').val().charCodeAt(0));
+			console.log(typeof($('#vsido_raw_console_bin').val()));
+			var bytes = $('#vsido_raw_console_bin').val().split(',');
+			console.log(bytes);
+			bytes.forEach(function(byte){
+				console.log(byte);
+				bin['bin'].push(parseInt(byte,16));
+			});
+			$("#vsido_output_request").text('send:<'+JSON.stringify(bin)+'>');
+			connect.send(bin);
 		});
 	});
 </script>
@@ -61,6 +69,13 @@
 <input type="submit" id="vsido_raw_send" value="送信">
 </div>
 
+<div>
+<label>コマンドのAsciiコード</label>
+<textarea name="console" id="vsido_raw_console_operate" rows="4" cols="10">x</textarea>
+<label>バイナリ</label>
+<textarea name="console" id="vsido_raw_console_bin" rows="4" cols="100">0x4,0x18</textarea>
+<input type="submit" id="vsido_raw_send_auto" value="送信(Auto attach 0xff,length,sum.)">
+</div>
 
    <div id="vsido_div_top">
      <label>要求<label/>

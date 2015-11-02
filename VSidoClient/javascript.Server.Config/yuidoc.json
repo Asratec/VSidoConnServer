@@ -1,0 +1,10 @@
+{
+    "name": "V-Sido Server Configure API",
+    "description": "V-Sido Server Configure JavaScript API.",
+    "version": "0.95",
+    "url": "https://v-sido-developer.com/files/VSidoConnServer/api/v0.95",
+    "options": {
+        "outdir": "../../doc/VSidoClient/javascript.Server.Config",
+        "paths":["./"]
+    }
+}

@@ -30,8 +30,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "test_dump.hpp"
 #include <iostream>
 
-void dumpTestData(const list<unsigned char>&data)
+void dumpTestDataReal(const string &msg,const list<unsigned char>&data)
 {
+	cout << msg << endl;
 	cout << endl;
 	for(auto ch:data)
 	{
@@ -39,5 +40,4 @@ void dumpTestData(const list<unsigned char>&data)
 	}
 	cout << endl;
 }
-
 

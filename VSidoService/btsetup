@@ -10,25 +10,19 @@ sleep 1
 #hcitool scan
 
 COMM_VSIDO=rfcomm75
-if [ -f /dev/${COMM_VSIDO} ]; then
-	rfcomm release ${COMM_VSIDO}
-fi
-#rfcomm bind ${COMM_VSIDO} 00:09:DD:40:E5:28
-#rfcomm bind ${COMM_VSIDO}  00:1B:DC:09:53:C3
-#rfcomm bind ${COMM_VSIDO}  00:1B:DC:09:53:C3
-
-#rfcomm bind rfcomm75  00:1B:DC:09:53:C3
-
 
 echo "${1}"
 mkdir -p /home/sysroot/usr/etc/
 touch /home/sysroot/usr/etc/bt.bind
+killall rfcomm
 if [ "" = "${1}" ] ; then
 	address=`cat /home/sysroot/usr/etc/bt.bind`
-	rfcomm bind ${COMM_VSIDO}  ${address}
+	rfcomm  connect hci0 ${address} &
 else 
-	rfcomm bind ${COMM_VSIDO}  ${1}
+	rfcomm  connect hci0 ${1}  &
 	echo "${1}" >/home/sysroot/usr/etc/bt.bind
 fi
-
+sleep 10
+ln -sf /dev/rfcomm0 /dev/${COMM_VSIDO}
 sync
+

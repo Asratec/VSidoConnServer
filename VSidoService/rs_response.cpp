@@ -27,11 +27,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "uart_send.hpp"
-#include "uart_read.hpp"
 #include "rs_response.hpp"
-#include "vsido_response_parser.hpp"
-#include "vsido_response_common.hpp"
 using namespace VSido;
 
 #include <string>

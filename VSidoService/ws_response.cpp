@@ -27,17 +27,17 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "uart_send.hpp"
-#include "uart_read.hpp"
 #include "ws_response.hpp"
-#include "vsido_response_parser.hpp"
-#include "vsido_response_common.hpp"
 using namespace VSido;
 
 #include <string>
+#include <map>
+#include <vector>
 #include <iostream>
 #include <mutex>              // std::mutex, std::unique_lock
 #include <condition_variable> // std::condition_variable
+#include <algorithm>    // std::find
+#include <cstring>
 using namespace std;
 #include <cstdlib>
 #include <sys/types.h>
@@ -59,6 +59,10 @@ static const int iConstBusyWait = 50 *1000;
 
 extern mutex mtxWSConnection;
 extern list<struct libwebsocket *> wsCallbacks;
+
+extern mutex mtxWSAck;
+extern map<libwebsocket *,list<string>> globalAckList;
+
 
 /** コンストラクタ
 */
@@ -111,6 +115,35 @@ void WSResponse::ack(const string &msg)
 			const auto ret =std::find(wsCallbacks.begin(),wsCallbacks.end(),this->_wsi);
 			if(wsCallbacks.end() == ret)
 			{
+				DUMP_VAR(this->_wsi);
+				return;
+			}
+		}
+		lock_guard<mutex> lock(mtxWSAck);
+		auto que = globalAckList.find(this->_wsi);
+		if(globalAckList.end() != que)
+		{
+			que->second.push_back(msg);
+			libwebsocket_callback_on_writable_all_protocol(libwebsockets_get_protocol(this->_wsi));
+			DUMP_VAR(this->_wsi);
+		}
+		else
+		{
+			list<string> acks = {msg};
+			globalAckList[this->_wsi] = acks;
+			libwebsocket_callback_on_writable_all_protocol(libwebsockets_get_protocol(this->_wsi));
+			DUMP_VAR(this->_wsi);
+		}
+	}
+#if 0
+	DUMP_VAR(this->_wsi);
+	if(nullptr != this->_wsi)
+	{
+		{
+			lock_guard<mutex> lock(mtxWSConnection);
+			const auto ret =std::find(wsCallbacks.begin(),wsCallbacks.end(),this->_wsi);
+			if(wsCallbacks.end() == ret)
+			{
 				return;
 			}
 		}
@@ -123,6 +156,7 @@ void WSResponse::ack(const string &msg)
 		}
         delete []data;
 	}
+#endif
 }
 
 

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf8">
+		<title>VSido Web App Sample</title>
+		<!-- Viewport mobile tag for sensible mobile support -->
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+		<!--meta name="viewport" content="user-scalable=no"-->
+		<!--SCRIPTS-->
+		<script src="./jquery-2.1.1.min.js"></script>
+		<script src="./vsido.client.api.js"></script>
+		<script src="./vsido.server.config.js"></script>
+	<!--SCRIPTS END-->
+	</head>
+	<body>
+		<script type="text/javascript">
+		$(function(){
+			var connect = new vsido.Connect({'ip':'192.168.11.5'});
+			
+			$("#SetServoAngle").click(function(){
+				var angle = new vsido.SetServoAngle(20);
+				angle.addAngle(2,20.1);
+				console.log(angle,JSON.stringify(angle));
+				connect.send(angle);
+			});
+
+			$("#SetIK1").click(function(){
+				var ik = new vsido.SetIK();
+				ik['ikf']['pos'] = true;
+				ik.setPosition(2,12,-67,35);
+				console.log(ik,JSON.stringify(ik));
+				connect.send(ik);
+			});
+
+			$("#SetIK2").click(function(){
+				var ik = new vsido.SetIK();
+				ik['ikf']['rot'] = true;
+				ik.setRotation(2,12,-67,35)
+				console.log(ik,JSON.stringify(ik));
+				connect.send(ik);
+			});
+
+			$("#SetIK3").click(function(){
+				var ik = new vsido.SetIK();
+				ik['ikf']['torq'] = true;
+				ik.setTorque(2,12,-67,35)
+				console.log(ik,JSON.stringify(ik));
+				connect.send(ik);
+			});
+			
+			$("#SetIKALL").click(function(){
+				var ik = new vsido.SetIK();
+				ik['ikf']['pos'] = true;
+				ik['ikf']['rot'] = true;
+				ik['ikf']['torq'] = true;
+				ik.setPosition(2,12,-67,35);
+				ik.setRotation(2,12,-67,35)
+				ik.setTorque(2,12,-67,35)
+				console.log(ik,JSON.stringify(ik));
+				connect.send(ik);
+			});
+		});
+		</script>
+		
+	</body>
+		<div>
+			<input type="button" id="SetServoAngle" value="角度設定" />
+		</div>
+		<div>
+			<input type="button" id="SetIK1" value="IK設定1" />
+		</div>
+		<div>
+			<input type="button" id="SetIK2" value="IK設定2" />
+		</div>
+		<div>
+			<input type="button" id="SetIK3" value="IK設定3" />
+		</div>
+		<div>
+			<input type="button" id="SetIKALL" value="IK設定 ALL" />
+		</div>
+</html>

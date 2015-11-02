@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf8">
+    <title>VSido Web App Sample</title>
+    <!-- Viewport mobile tag for sensible mobile support -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<!--meta name="viewport" content="user-scalable=no"-->
+
+    <!--STYLES-->
+    <link rel="stylesheet" href="/styles/importer.css">
+    <link rel="stylesheet" href="/styles/jquery.mobile-1.4.5.min.css">
+    <link rel="stylesheet" href="/styles/vsido.connection.css">
+    <link rel="stylesheet" href="/styles/vsido.hand.css">
+    <link rel="stylesheet" href="/styles/vsido.layout.css">
+    <link rel="stylesheet" href="/styles/vsido.walk.css">
+    <!--STYLES END-->
+    
+	<!--SCRIPTS-->
+<script src="/js/jquery-2.1.1.min.js"></script>
+<script src="/js/jquery.mobile-1.4.5.min.js"></script>
+<script src="/js/vsido.client.api.js"></script>
+<script src="/js/vsido.ui.js"></script>
+<!--SCRIPTS END-->
+	
+	
+  </head>
+
+  <body>
+    <a href="/" target="_self">トップに戻る</a>
+
+<style type="text/css">
+<!--
+.add {
+ width:50px;
+}
+.length {
+ width:50px;
+}
+-->
+</style>	
+	
+	
+<script type="text/javascript">
+
+
+$(function(){
+	var connect = new vsido.Connect();
+	createVidTable();
+	$("#vidSet").click(function(){
+		var vid = new vsido.SetVIDValue();
+		for (var item in VARS_ITEMS) {
+			var vidReq = getVIDValue(VARS_ITEMS[item],vid);
+		}
+		$("#vsido_output_request").text('send:<'+JSON.stringify(vid)+'>');
+		connect.send(vid,function(response){
+			console.log(JSON.stringify(response));
+			$("#vsido_output_response").text(
+				'response:<' + JSON.stringify(response) + '>'
+			);
+		});
+	});
+
+	$("#vidGet").click(function(){
+		var vid = new vsido.GetVIDValue();
+		for (var item in VARS_ITEMS) {
+			var vidReq = getVIDValueID(VARS_ITEMS[item]);
+			if(null != vidReq) {
+				//console.log(vidReq);
+				vid.addVID(vidReq);
+			}
+		}
+		$("#vsido_output_request").text('send:<'+JSON.stringify(vid)+'>');
+		connect.send(vid,function(response){
+			console.log(JSON.stringify(response));
+			$("#vsido_output_response").text(
+				'response:<' + JSON.stringify(response) + '>'
+			);
+			setVIDValue(response['vid']);
+		});
+	});
+	
+
+	$("#all_select").click(function(){
+		for (var item in VARS_ITEMS) {
+			checkVIDOn(VARS_ITEMS[item]);
+		}
+	});
+	
+});
+</script>
+
+
+	<div class="vsido_div_top">
+	   <label>VID設定取得:</lable>
+	</div>
+	<br>
+	<div>
+		<input type="button" id="all_select" value="すべて選択" />
+		<input type="button" id="vidGet" value="取得" />
+		<input type="button" id="vidSet" value="設定" />
+	</div>
+	<br>
+
+
+	<table id="vidTable" border="1" bordercolor="#7f0000">
+		<tbody></tbody>
+	</table>
+
+	<br>
+
+
+   <div id="vsido_div_top">
+     <label>要求<label/>
+     <div id="vsido_output_request"></div>
+     <label>返事<label/>
+     <div id="vsido_output_response"></div>
+   </div>
+	
+  </body>
+</html>

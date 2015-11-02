@@ -41,9 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace std;
 
 #include "bt_watchdog.hpp"
-#include "uart_connect.hpp"
-#include "uart_send.hpp"
-#include "uart_read.hpp"
 using namespace VSido;
 
 #include "debug.h"
@@ -85,14 +82,10 @@ void BTWatchDog::notifyBTBindEnd(void)
 
 
 /** コンストラクタ
-* @param send VSidoと繋がるURATの送信
-* @param read VSidoと繋がるURATの受信
 */
-BTWatchDog::BTWatchDog(UARTSend &send,UARTRead &read)
-:_send(send)
-,_read(read)
-,_conn("/dev/tty.vsido.link")
+BTWatchDog::BTWatchDog()
 {
+#if 0
 	_conn.openSPP();
     DUMP_VAR(_conn);
 	if(0 < _conn)
@@ -100,6 +93,7 @@ BTWatchDog::BTWatchDog(UARTSend &send,UARTRead &read)
 		_send.setFD(_conn);
 		_read.setFD(_conn);
 	}
+#endif
 }
 
 
@@ -114,14 +108,16 @@ void BTWatchDog::operator()()
 		bindCvBegin.wait(lckBegin);
 		
 		/// close uart.
+#if 0
 		_conn.closeSPP();
-		
+#endif		
 		
 		unique_lock<mutex> lckEnd(bindMtxEnd);
 		bindCvEnd.wait(lckEnd);
 		
 		/// open uart.
 		usleep(1000*1000*5);
+#if 0
 		_conn.openSPP();
 	    DUMP_VAR(_conn);
 		if(0 < _conn)
@@ -129,6 +125,7 @@ void BTWatchDog::operator()()
 			_send.setFD(_conn);
 			_read.setFD(_conn);
 		}
+#endif
 	}
 }
 

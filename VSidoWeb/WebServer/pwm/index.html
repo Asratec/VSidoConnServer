@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf8">
+    <title>VSido Web App Sample</title>
+    <!-- Viewport mobile tag for sensible mobile support -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<!--meta name="viewport" content="user-scalable=no"-->
+
+    <!--STYLES-->
+    <link rel="stylesheet" href="/styles/importer.css">
+    <link rel="stylesheet" href="/styles/jquery.mobile-1.4.5.min.css">
+    <link rel="stylesheet" href="/styles/vsido.connection.css">
+    <link rel="stylesheet" href="/styles/vsido.hand.css">
+    <link rel="stylesheet" href="/styles/vsido.layout.css">
+    <link rel="stylesheet" href="/styles/vsido.walk.css">
+    <!--STYLES END-->
+    
+	<!--SCRIPTS-->
+<script src="/js/jquery-2.1.1.min.js"></script>
+<script src="/js/jquery.mobile-1.4.5.min.js"></script>
+<script src="/js/vsido.client.api.js"></script>
+<!--SCRIPTS END-->
+	
+	
+  </head>
+
+  <body>
+    <a href="/" target="_self">トップに戻る</a>
+
+<style type="text/css">
+<!--
+.add {
+ width:50px;
+}
+.length {
+ width:50px;
+}
+-->
+</style>	
+	
+	
+<script type="text/javascript">
+function getValue(id,cmd){
+	var checkName = ":input[name='s";
+	checkName = checkName + id;
+	checkName = checkName + "']:checked";
+	//console.log(checkName);
+	
+	var pwmName = ":input[name='s";
+	pwmName = pwmName + id;
+	pwmName = pwmName + "_pwm']";
+	//console.log(pwmName);
+	
+	
+	if($(checkName).val()) {
+		return cmd.setWidth(id,parseInt($(pwmName).val()));
+	}
+	return null;
+}
+
+function checkOn(id){
+	var checkName = ":input[name='s";
+	checkName = checkName + id;
+	checkName = checkName + "']";
+	//console.log(checkName);
+	$(checkName).attr("checked", true); 
+}
+
+
+$(function(){
+	var CONST_SERVO_MAX = 7;
+	var connect = new vsido.Connect();
+	$("#pwm").click(function(){
+		var pluse = new vsido.SetPWMPulse();
+		for (i = 4; i < CONST_SERVO_MAX +1; i = i +1){
+			var pluseReq = getValue(i,pluse);
+		}
+		$("#vsido_output_request").text('send:<'+JSON.stringify(pluse)+'>');
+		connect.send(pluse,function(response){
+			console.log(JSON.stringify(response));
+			$("#vsido_output_response").text(
+				'response:<' + JSON.stringify(response) + '>'
+			);
+		});
+	});
+
+
+	$("#all_select").click(function(){
+		for (i = 4; i < CONST_SERVO_MAX +1; i = i +1){
+			checkOn(i);
+		}
+	});
+	
+});
+</script>
+
+
+	<div class="vsido_div_top">
+	   <label>PWM 設定:</lable>
+	</div>
+	<br>
+	<div>
+		<input type="button" id="all_select" value="すべて選択" />
+		<input type="button" id="pwm" value="設定" />
+	</div>
+	<br>
+
+
+	<table border="1" bordercolor="#7f0000">
+	<tr>
+
+	<td>
+	<p>
+	<input type="checkbox" class="checkbox"  name="s6" value="1">ポート 6:
+	<br>
+	<input type="text" class="pwm" name="s6_pwm" value="0">
+	</p>
+	</td>
+	<td>
+	<p>
+	<input type="checkbox" class="checkbox" name="s7" value="1">ポート 7:
+	<br>
+	<input type="text" class="pwm" name="s7_pwm" value="0">
+	</p>
+	</td>
+
+
+	</tr>
+
+	</table>
+
+	<br>
+
+
+   <div id="vsido_div_top">
+     <label>要求<label/>
+     <div id="vsido_output_request"></div>
+     <label>返事<label/>
+     <div id="vsido_output_response"></div>
+   </div>
+	
+  </body>
+</html>

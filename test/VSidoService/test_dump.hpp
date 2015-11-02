@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #ifndef __TEST_DUMP_HPP__
 #define __TEST_DUMP_HPP__
+#include <string>
 #include <list>
 using namespace std;
 
@@ -36,7 +37,49 @@ using namespace std;
 #define _HBYTE(x) (unsigned char)(((int)x <<1) &0xff)
 #define _LBYTE(x) (unsigned char)(((((int)x <<1) >>8 ) &0xff)<< 1)
 
-void dumpTestData(const list<unsigned char>&data);
+#define dumpTestData(x) dumpTestDataReal(#x,x)
+void dumpTestDataReal(const string &msg,const list<unsigned char>&data);
+
+
+
+#define DUMP_VAR(x) cout << __FILE__ " " << __LINE__ << ":" << #x << "=<" << x << ">" <<endl;
+
+
+
+#define GEN_COMMON_SEND_UART(x) \
+{ \
+	uartExpectedSend.push_front(uartExpectedSend.size() + 3 +1); \
+	uartExpectedSend.push_front((unsigned char)x); \
+	/*uartExpectedSend.push_front((Request::uidCounter_)%200);*/ \
+	/*uartExpectedSend.push_front((Request::uidCounter_+1)%200);*/ \
+	uartExpectedSend.push_front(0xff); \
+	unsigned char _sum = 0; \
+	for(auto data : uartExpectedSend) \
+	{ \
+		_sum ^= data; \
+	} \
+	uartExpectedSend.push_back(_sum); \
+}
+
+
+#define GEN_COMMON_READ_UART(x) \
+{ \
+	uartAck.push_front(uartAck.size() + 3 +1); \
+	uartAck.push_front((unsigned char)x); \
+	/*uartAck.push_front((Request::uidCounter_)%200);*/ \
+	/*uartAck.push_front((Request::uidCounter_+1)%200);*/ \
+	uartAck.push_front(0xff); \
+	unsigned char _sum = 0; \
+	for(auto data : uartAck) \
+	{ \
+		_sum ^= data; \
+	} \
+	uartAck.push_back(_sum); \
+}
+
+
+
+
 
 #endif // __TEST_DUMP_HPP__
 

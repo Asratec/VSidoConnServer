@@ -27,7 +27,7 @@
 #OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-.PHONY: all build install package clean doc doc-service doc-client
+.PHONY: all build install package clean doc doc-service doc-client doc-connect scan-build test cccc
 all:package
 	
 build:
@@ -37,25 +37,82 @@ install:
 
 package:
 	make -f Build.mk PACKROOT=$(shell pwd)/package/usr install
-	tar czvf VSidoConnServer.tar.gz -C $(shell pwd)/package ./
+	tar czf VSidoConnServer.tar.gz -C $(shell pwd)/package ./
 
 clean:
 	make -f Build.mk clean
 	rm -rf $(shell pwd)/package
 	rm -f VSidoConnServer.tar.gz
+	rm -rf unittest
 
 copy:
 	cp -f objects/VSidoService/VSido.srv /usr/share/nginx/html/
 	
-doc:pre-doc doc-service doc-client
+doc:pre-doc doc-service doc-client doc-connect
 
 pre-doc:
-	rm -rf ./doxydoc
+	rm -rf ./doc
 
 doc-service:
-	mkdir -p ./doxydoc/VSidoService
+	mkdir -p ./doc/VSidoService
 	cd VSidoService && doxygen  Doxyfile
 	
 doc-client:
-	mkdir -p ./doxydoc/VSidoClient/javascript
+	mkdir -p ./doc/VSidoClient/javascript
 	cd VSidoClient/javascript && yuidoc --themedir ./simple
+	
+	mkdir -p ./doc/VSidoClient/javascript.Server.Config
+	cd VSidoClient/javascript.Server.Config && yuidoc --themedir ./simple
+	
+	mkdir -p ./doc/VSidoClient/JSON
+	cd VSidoClient/JSON && doxygen  Doxyfile
+	cp -f VSidoClient/JSON/vscad.png ./doc/VSidoClient/JSON/html/vscad.png
+	
+	mkdir -p ./doc/VSidoClient/JSON.Server.Config
+	cd VSidoClient/JSON.Server.Config && doxygen  Doxyfile
+	cp -f VSidoClient/JSON.Server.Config/vscad.png ./doc/VSidoClient/JSON.Server.Config/html/vscad.png
+doc-connect:
+	mkdir -p ./doc/VSidoConnect/cpp
+	cd VSidoConnect/cpp && doxygen  Doxyfile
+	mkdir -p ./doc/VSidoConnect/ruby
+	cd VSidoConnect/ruby && rdoc  VSido.rb
+	cp -rf VSidoConnect/ruby/doc/* ./doc/VSidoConnect/ruby/
+	
+	
+scan-build:
+	mkdir -p scan-doc
+	scan-build-3.6 -o scan-doc -stats make
+
+
+package-ut:
+	mkdir -p unittest/ut
+	mkdir -p unittest/gcov
+	make -f Build.UT.mk PACKROOT=$(shell pwd)/unittest/usr install
+
+test: test-cov-service test-cov-conncet
+
+test-run-service:package-ut
+	-objects/test/VSidoService/VSidoService.ut --log_format=XML --log_sink=unittest/ut/service.results.xml --log_level=all --report_level=no
+test-cov-service:test-run-service
+	cd objects/VSidoService && gcovr --xml > ../../unittest/gcov/service.result.xml
+	sed -e 's/<source>.<\/source>/<source>\/<\/source>/g' ./unittest/gcov/service.result.xml > ./unittest/gcov/service.result2.xml 2> /dev/null
+	mv -f ./unittest/gcov/service.result2.xml ./unittest/gcov/service.result.xml	
+	
+test-run-conncet:package-ut
+	-objects/test/VSidoConnect/VSidoConnect.parser.ut --log_format=XML --log_sink=unittest/ut/connect.parser.results.xml --log_level=all --report_level=no
+test-cov-conncet:test-run-conncet
+	cd objects/VSidoConnect && gcovr --xml > ../../unittest/gcov/connect.parser.result.xml
+	sed -e 's/<source>.<\/source>/<source>\/<\/source>/g' ./unittest/gcov/connect.parser.result.xml > ./unittest/gcov/connect.parser.result2.xml 2> /dev/null
+	mv -f ./unittest/gcov/connect.parser.result2.xml ./unittest/gcov/connect.parser.result.xml
+	
+	
+CCCC_FILES := $(shell find VSidoConnect/cpp/ -type f -name *pp)
+CCCC_FILES += $(shell find VSidoService/ -type f  -name *pp)
+
+cccc:
+	cccc $(CCCC_FILES)
+	
+	
+test-motion:package-ut
+	./objects/VSidoMotion/test/motiontest $(shell pwd)/VSidoMotion/data/
+	

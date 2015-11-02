@@ -28,17 +28,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "dispatch.hpp"
-#include "vsido_response_parser.hpp"
 #include "ws_response.hpp"
 #include "rs_response.hpp"
-#include "vsido_request_common.hpp"
-#include "vsido_response_common.hpp"
-#include "uart_send.hpp"
-#include "vsido_request_parser.hpp"
+#include "cmd_common.hpp"
+#include "cmd_parser.hpp"
 using namespace VSido;
 
 #include <mutex>              // std::mutex, std::unique_lock
 #include <condition_variable> // std::condition_variable
+#include <thread>
 using namespace std;
 
 
@@ -63,18 +61,13 @@ static const int iConstRequestWaitTimeout = 10;
 
 static list<tuple<string,shared_ptr<WSResponse>>> uniq_wsReq;
 static list<tuple<string,shared_ptr<RSResponse>>> uniq_rsReq;
-static list<shared_ptr<WSResponse>> uniq_wsRes;
-static list<shared_ptr<RSResponse>> uniq_rsRes;
 
 /** コンストラクタ
 * @param send VSidoと繋がるURATの送信
 */
-Dispatcher::Dispatcher(UARTSend &send)
-:_send(send)
-,_wsReq(uniq_wsReq)
+Dispatcher::Dispatcher()
+:_wsReq(uniq_wsReq)
 ,_rsReq(uniq_rsReq)
-,_wsRes(uniq_wsRes)
-,_rsRes(uniq_rsRes)
 {
 }
 
@@ -124,15 +117,10 @@ static void logRes(const string &res)
 * @param req 要求
 * @param res WebSocket返事先
 */
-void Dispatcher::addRequest(const string &req,shared_ptr<WSResponse> res)
+void Dispatcher::addRequest(const string req,shared_ptr<WSResponse> res)
 {
 	logReq(req);
 	DUMP_VAR_DETAILS(req);
-	if(this->filterBusy())
-	{
-		res->ackBusy();
-	}
-	else
 	{
 		lock_guard<mutex> lock(dataMtx);
 		this->_wsReq.push_back(make_tuple(req,res));
@@ -146,17 +134,11 @@ void Dispatcher::addRequest(const string &req,shared_ptr<WSResponse> res)
 * @param req 要求
 * @param res TCPSocket返事先
 */
-void Dispatcher::addRequest(const string &req,shared_ptr<RSResponse> res)
+void Dispatcher::addRequest(const string req,shared_ptr<RSResponse> res)
 {
 	logReq(req);
 	DUMP_VAR_DETAILS(req);
 	
-	if(this->filterBusy())
-	{
-		res->ackBusy();
-		logRes("{\"type\":\"busy\"}\n");
-	}
-	else
 	{
 		this->_rsReq.push_back(make_tuple(req,res));
 	}
@@ -165,133 +147,9 @@ void Dispatcher::addRequest(const string &req,shared_ptr<RSResponse> res)
 }
 
 
-void Dispatcher::clearTimeout(void)
-{
-	DUMP_VAR_DETAILS(&dataMtx);
-	
-	auto distWS = this->ackDistWS();
-	if(nullptr != distWS && false == _skipTimeout)
-	{
-		logRes("{\"type\":\"timeout\"}\n");
-		distWS->ackTimeout();
-	}
-	auto distRS = this->ackDistRS();
-	if(nullptr != distRS && false == _skipTimeout)
-	{
-		logRes("{\"type\":\"timeout\"}\n");
-		distRS->ackTimeout();
-	}
-	
-	{
-		/// lock mini scope
-		lock_guard<mutex> lock(dataMtx);
-		this->_wsReq.clear();
-		this->_rsReq.clear();
-		this->_wsRes.clear();
-		this->_rsRes.clear();
-		DUMP_VAR_DETAILS(&dataMtx);
-	}
-}
-
-
-bool Dispatcher::filterBusy(void)
-{
-	bool busy = false;
-	DUMP_VAR_DETAILS(this->_wsRes.size());
-	DUMP_VAR_DETAILS(this->_wsRes.empty());
-	lock_guard<mutex> lock(dataMtx);
-	busy = ! this->_wsRes.empty();
-	if(busy)
-	{
-		return true;
-	}
-
-	DUMP_VAR_DETAILS(this->_rsRes.size());
-	DUMP_VAR_DETAILS(this->_rsRes.empty());
-	busy = ! this->_rsRes.empty();
-	if(busy)
-	{
-		return true;
-	}
-	return false;
-}
-
-shared_ptr<WSResponse> Dispatcher::ackDistWS()
-{
-	shared_ptr<WSResponse> topWS;
-	{
-		/// lock mini scope
-		lock_guard<mutex> lock(dataMtx);
-		if(false == this->_wsRes.empty())
-		{
-			topWS = this->_wsRes.front();
-		}
-		DUMP_VAR_DETAILS(&dataMtx);
-	}
-	return topWS;
-}
-shared_ptr<RSResponse> Dispatcher::ackDistRS()
-{
-	shared_ptr<RSResponse> topRS;
-	{
-		/// lock mini scope
-		lock_guard<mutex> lock(dataMtx);
-		if(false == this->_rsRes.empty())
-		{
-			topRS = this->_rsRes.front();
-		}
-		DUMP_VAR_DETAILS(&dataMtx);
-	}
-	return topRS;
-}
 
 
 
-/** 返事を返す
-* @param uart VSidoコネクターから返事
-* @return None
-*/
-void Dispatcher::ack(const list<unsigned char> &uart)
-{
-	struct timeval tv;
-	gettimeofday(&tv,NULL);
-	long long now = tv.tv_sec *1000 + tv.tv_usec /1000;
-	long long repsponseTimeLag = now - globalSendTime;
-	DUMP_VAR(repsponseTimeLag);
-	
-	ResponseParser response(uart);
-	DUMP_VAR_DETAILS(&response);
-	
-	
-	auto distWS = this->ackDistWS();
-	if(nullptr != distWS)
-	{
-		auto expect = distWS->getExpect();
-		auto resMsg = response.conv(expect);
-		logRes(resMsg);
-		distWS->ack(resMsg);
-	}
-	auto distRS = this->ackDistRS();
-	if(nullptr != distRS)
-	{
-		auto expect = distRS->getExpect();
-		auto resMsg = response.conv(expect);
-		logRes(resMsg);
-		distRS->ack(resMsg);
-	}
-
-	{
-		/// lock mini scope
-		lock_guard<mutex> lock(dataMtx);
-		this->_wsReq.clear();
-		this->_rsReq.clear();
-		this->_wsRes.clear();
-		this->_rsRes.clear();
-		DUMP_VAR_DETAILS(&dataMtx);
-	}
-	ackCv.notify_all();
-	
-}
 
 /** 分配スレッド本体
 * @return None
@@ -300,7 +158,6 @@ void Dispatcher::operator()()
 {
 	while(true)
 	{
-		_skipTimeout = false;
 		/// send
 		bool wait = false;
 		{
@@ -312,8 +169,7 @@ void Dispatcher::operator()()
 			DUMP_VAR_DETAILS(&reqMtx);
 			DUMP_VAR_DETAILS(&reqCv);
 			unique_lock<mutex> lck(reqMtx);
-			auto now = chrono::system_clock::now();
-			auto waitRet = reqCv.wait_until(lck,now + std::chrono::milliseconds(iConstRequestWaitTimeout));
+			auto waitRet = reqCv.wait_for(lck,std::chrono::milliseconds(iConstRequestWaitTimeout));
 			if(cv_status::timeout==waitRet)
 			{
 				//printf("%s,%d timeout\n",__FILE__,__LINE__);
@@ -324,93 +180,89 @@ void Dispatcher::operator()()
 		trySendWSReq();
 		/// try send tpc socket request.
 		trySendRSReq();
-		
-		struct timeval tv;
-		gettimeofday(&tv,NULL);
-		globalSendTime = tv.tv_sec *1000 + tv.tv_usec /1000;
-		DUMP_VAR_DETAILS(&ackMtx);
-		DUMP_VAR_DETAILS(&ackCv);
-		unique_lock<mutex> lck(ackMtx);
-		
-		auto now = chrono::system_clock::now();
-		auto waitRet = ackCv.wait_until(lck,now + std::chrono::milliseconds(iConstVSidoCommTimeout));
-		if(cv_status::timeout == waitRet)
-		{
-			this->clearTimeout();
-		}
+		this_thread::yield();
 	}
 }
 
 void Dispatcher::trySendWSReq(void)
 {
-	list<tuple<string,shared_ptr<WSResponse>>> localReq;
+	tuple<string,shared_ptr<WSResponse>> req;
+	bool empty = true;
+
 	{
 		lock_guard<mutex> lock(dataMtx);
-		localReq = this->_wsReq;
-	}
-	for(auto &req : localReq)
-	{
-		RequestParser parser(std::get<0>(req));
-		DUMP_VAR_DETAILS(&parser);
-		auto request = parser.create();
-		auto uart = request->conv();
-		auto expect = request->expect();
-		if(nullptr != expect)
+		if(false == this->_wsReq.empty())
 		{
-			auto res = std::get<1>(req);
-			res->setExpect(expect);
-			lock_guard<mutex> lock(dataMtx);
-			_wsRes.push_back(res);
+			req = this->_wsReq.back();
+			empty = false;
 		}
-		if(false == uart.empty())
+	}
+	if(false == empty)
+	{
+		JSONRequestParser parser(std::get<0>(req));
+		DUMP_VAR_DETAILS(&parser);
+		auto errMsg = parser.errorMsg();
+		if(errMsg.empty())
 		{
-		/// uart request
-			this->_send.send(uart);
+			auto request = parser.create();
+			auto result = request->exec();
+			auto wsRes = std::get<1>(req);
+			wsRes->ack(result);
 		}
 		else
 		{
-			/// other request now only for bluetooth 
-			auto result = request->runTask();
-			auto res = std::get<1>(req);
-			if(false == result.empty())
-			{
-				res->ack(result);
-				_skipTimeout = true;
-			}
+			picojson::object _res;
+			picojson::value resValue(_res);
+			_res["type"] = picojson::value(string("error"));
+			_res["detail"] = picojson::value(errMsg);
+			auto rsRes = std::get<1>(req);
+			rsRes->ack(resValue.serialize());
 		}
-		
+	}
+	{
+		lock_guard<mutex> lock(dataMtx);
+		this->_wsReq.clear();
 	}
 }
 void Dispatcher::trySendRSReq(void)
 {
-	list<tuple<string,shared_ptr<RSResponse>>> localReq;
+	tuple<string,shared_ptr<RSResponse>> req;
+	bool empty = true;
+
 	{
 		lock_guard<mutex> lock(dataMtx);
-		localReq = this->_rsReq;
-	}
-	for(auto &req : localReq)
-	{
-		RequestParser parser(std::get<0>(req));
-		DUMP_VAR_DETAILS(&parser);
-		auto request = parser.create();
-		auto uart = request->conv();
-		auto expect = request->expect();
-		if(nullptr != expect)
+		if(false == this->_rsReq.empty())
 		{
-			auto res = std::get<1>(req);
-			res->setExpect(expect);
-			lock_guard<mutex> lock(dataMtx);
-			_rsRes.push_back(res);
+			req = this->_rsReq.back();
+			empty = false;
 		}
-		if(false == uart.empty())
+	}
+	if(false == empty)
+	{
+		JSONRequestParser parser(std::get<0>(req));
+		DUMP_VAR_DETAILS(&parser);
+		auto errMsg = parser.errorMsg();
+		if(errMsg.empty())
 		{
-		/// uart request
-			this->_send.send(uart);
+			auto request = parser.create();
+			auto result = request->exec();
+			auto rsRes = std::get<1>(req);
+			rsRes->ack(result);
 		}
 		else
 		{
-			////
+			picojson::object _res;
+			picojson::value resValue(_res);
+			_res["type"] = picojson::value(string("error"));
+			_res["detail"] = picojson::value(errMsg);
+			auto rsRes = std::get<1>(req);
+			rsRes->ack(resValue.serialize());
+			
 		}
+	}
+	{
+		lock_guard<mutex> lock(dataMtx);
+		this->_rsReq.clear();
 	}
 }
 

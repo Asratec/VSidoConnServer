@@ -27,16 +27,15 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "uart_send.hpp"
-#include "uart_read.hpp"
 #include "rs_request.hpp"
 #include "rs_response.hpp"
 #include "dispatch.hpp"
-#include "vsido_request_parser.hpp"
+#include "cmd_parser.hpp"
 using namespace VSido;
 
 #include <string>
 #include <iostream>
+#include <thread>
 using namespace std;
 #include <cstdlib>
 #include <sys/types.h>
@@ -116,6 +115,7 @@ void RSRequest::operator()()
     	shared_ptr<RSResponse> res(new RSResponse());
     	res->setDist(comm_fd);
     	_dis.addRequest(string(data,size),res);
+    	this_thread::yield();
 	}
 	close(listen_fd);
 }

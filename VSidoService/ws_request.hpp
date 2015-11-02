@@ -39,7 +39,6 @@ struct libwebsocket;
 
 namespace VSido
 {
-class UARTSend;
 class Dispatcher;
 /**
  * WebSocketの要求

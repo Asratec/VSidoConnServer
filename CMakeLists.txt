@@ -32,12 +32,25 @@ else(SUBDIR)
 	project (VSido4Linux)
 endif(SUBDIR)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS} -std=c11 -pthread -Wconversion ")
+set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -Wconversion ")
 
 
+set(CMAKE_C_FLAGS_DEBUG     "${CMAKE_C_FLAGS_DEBUG} -pg -g -fprofile-arcs -ftest-coverage")
+set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} -pg -g -fprofile-arcs -ftest-coverage")
+set(CMAKE_LD_FLAGS_DEBUG    "${CMAKE_LD_FLAGS_DEBUG} -pg -g -fprofile-arcs")
 
-#add_subdirectory(VSidoClient)
+
+include_directories(${PROJECT_SOURCE_DIR}/3dpart)
+
+add_subdirectory(VSidoClient)
+add_subdirectory(VSidoConnect)
+add_subdirectory(VSidoMotion)
 add_subdirectory(VSidoService)
 add_subdirectory(VSidoWeb)
+
+IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+	add_subdirectory(test/VSidoService)
+	add_subdirectory(test/VSidoConnect)
+ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 

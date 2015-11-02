@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
   <head>
@@ -39,13 +38,13 @@
 $(function(){
   var vsido = new VSidoWeb();
 /*
- サーボ1
+ サーボ2
 */
-  $("#vsido_range_servo_1").change(function(){
-    	console.log('vsido_range_servo_1');
+  $("#vsido_range_servo_2").change(function(){
+    	console.log('vsido_range_servo_2');
 		var angle = vsido.servoAngle();
 		console.log(JSON.stringify(angle));
-		angle["cycle"] = 10;
+		angle["cycle"] = 100;
 		angle["servo"].push(
 			{
 				"sid":2,
@@ -64,13 +63,13 @@ $(function(){
 		});
     });
 /*
- サーボ２
+ サーボ3
 */
-  $("#vsido_range_servo_2").change(function(){
-    	console.log('vsido_range_servo_2');
+  $("#vsido_range_servo_3").change(function(){
+    	console.log('vsido_range_servo_3');
 		var angle = vsido.servoAngle();
 		console.log(JSON.stringify(angle));
-		angle["cycle"] = 10;
+		angle["cycle"] = 100;
 		angle["servo"].push(
 			{
 				"sid":3,
@@ -81,22 +80,6 @@ $(function(){
 		vsido.send(angle);
     });
 
-	
-	/*
-	* sample to read angle of servo 2
-	*/
-	var readAngle = vsido.readServoInfo();
-	console.log(JSON.stringify(readAngle));
-	var servoInfo = vsido.readServoAngle();
-	servoInfo['sid'] = 2;
-	servoInfo['address'] = 19;
-	servoInfo['length'] = 2;
-	readAngle["servo"].push(servoInfo);
-	console.log(JSON.stringify(readAngle));
-	vsido.send(readAngle,function(response) {
-		console.log(response);
-	});
-	
 });
 
 </script>
@@ -108,8 +91,8 @@ $(function(){
 	 <input type="button" class="vsido_btn" value="目標角度設定" id= "vsido_dist_angle">
    </div-->
    <div class="vsido_div_range">
-	 <label for="vsido_range_servo_1">サーボ１角度:</label>
-	 <input type="range"  class="vsido_range"  data-highlight="true" id= "vsido_range_servo_1" min="-140" max="140" value="0" step="1" />
+	 <label for="vsido_range_servo_2">サーボ2角度:</label>
+	 <input type="range"  class="vsido_range"  data-highlight="true" id= "vsido_range_servo_2" min="-140" max="140" value="0" step="1" />
    </div>
    <br>
    <br>
@@ -117,8 +100,8 @@ $(function(){
    <br>
    <br>
    <div class="vsido_div_range">
-	 <label for="vsido_range_servo_2">サーボ2角度:</label>
-	 <input type="range"  class="vsido_range"  data-highlight="true" id= "vsido_range_servo_2" min="-140" max="140" value="0" step="1" />
+	 <label for="vsido_range_servo_3">サーボ3角度:</label>
+	 <input type="range"  class="vsido_range"  data-highlight="true" id= "vsido_range_servo_3" min="-140" max="140" value="0" step="1" />
    </div>
    <br>
    <br>

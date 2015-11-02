@@ -38,11 +38,9 @@ using namespace std;
 
 namespace VSido
 {
-class Request;
-class Response;
+class JSONRequest;
 class WSResponse;
 class RSResponse;
-class UARTSend;
 
 /**
  * 送受信の分配
@@ -53,25 +51,19 @@ public:
 	/** コンストラクタ
 	* @param send VSidoと繋がるURATの送信
 	*/
-    Dispatcher(UARTSend &send);
+    Dispatcher();
 	
 	/** 要求を追加する
 	* @param req 要求
 	* @param res WebSocket返事先
 	*/
-	void addRequest(const string &req,shared_ptr<WSResponse> res);
+	void addRequest(const string req,shared_ptr<WSResponse> res);
 
 	/** 要求を追加する
 	* @param req 要求
 	* @param res TCPSocket返事先
 	*/
-	void addRequest(const string &req,shared_ptr<RSResponse> res);
-
-	/** 返事を返す
-	* @param uart VSidoコネクターから返事
-	* @return None
-	*/
-    void ack(const list<unsigned char> &uart);
+	void addRequest(const string req,shared_ptr<RSResponse> res);
 
 	/** 分配スレッド本体
 	* @return None
@@ -79,10 +71,6 @@ public:
     void operator()();
 	
 private:
-	void clearTimeout(void);
-	bool filterBusy(void);
-	shared_ptr<WSResponse> ackDistWS();
-	shared_ptr<RSResponse> ackDistRS();
 	
 	void trySendWSReq(void);
 	void trySendRSReq(void);
@@ -90,12 +78,6 @@ private:
 private:
 	list<tuple<string,shared_ptr<WSResponse>>> &_wsReq;
 	list<tuple<string,shared_ptr<RSResponse>>> &_rsReq;
-
-	list<shared_ptr<WSResponse>> &_wsRes;
-	list<shared_ptr<RSResponse>> &_rsRes;
-
-	UARTSend &_send;
-	bool _skipTimeout;
 };
 } // namespace VSido
 

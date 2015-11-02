@@ -1,10 +1,10 @@
 {
     "name": "V-Sido CONNECT Web API",
     "description": "V-Sido CONNECT Web JavaScript API.",
-    "version": "0.81",
-    "url": "https://v-sido-developer.com/files/VSidoConnServer/api/v0.81",
+    "version": "0.95",
+    "url": "https://v-sido-developer.com/files/VSidoConnServer/api/v0.95",
     "options": {
-        "outdir": "../../doxydoc/VSidoClient/javascript",
+        "outdir": "../../doc/VSidoClient/javascript",
         "paths":["./"]
     }
 }

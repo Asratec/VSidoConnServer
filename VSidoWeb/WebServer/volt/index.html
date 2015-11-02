@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf8">
+    <title>VSido Web App Sample</title>
+    <!-- Viewport mobile tag for sensible mobile support -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<!--meta name="viewport" content="user-scalable=no"-->
+
+    <!--STYLES-->
+    <link rel="stylesheet" href="/styles/importer.css">
+    <link rel="stylesheet" href="/styles/jquery.mobile-1.4.5.min.css">
+    <link rel="stylesheet" href="/styles/vsido.connection.css">
+    <link rel="stylesheet" href="/styles/vsido.hand.css">
+    <link rel="stylesheet" href="/styles/vsido.layout.css">
+    <link rel="stylesheet" href="/styles/vsido.walk.css">
+    <!--STYLES END-->
+    
+	<!--SCRIPTS-->
+<script src="/js/jquery-2.1.1.min.js"></script>
+<script src="/js/jquery.mobile-1.4.5.min.js"></script>
+<script src="/js/vsido.client.api.js"></script>
+<!--SCRIPTS END-->
+	
+	
+  </head>
+
+  <body>
+    <a href="/" target="_self">トップに戻る</a>
+
+<style type="text/css">
+<!--
+.add {
+ width:50px;
+}
+.length {
+ width:50px;
+}
+-->
+</style>	
+	
+	
+<script type="text/javascript">
+
+$(function(){
+	var connect = new vsido.Connect();
+	$("#volt").click(function(){
+		var power = new vsido.GetVoltage();
+		$("#vsido_output_request").text('send:<'+JSON.stringify(power)+'>');
+		connect.send(power,function(response){
+			console.log(JSON.stringify(response));
+			$("#vsido_output_response").text(
+				'response:<' + JSON.stringify(response) + '>'
+			);
+		});
+	});
+});
+</script>
+
+
+	<div class="vsido_div_top">
+	   <label>電源電圧:（RC版未対応）</lable>
+	</div>
+	<br>
+	<div>
+		<input type="button" id="volt" value="電源電圧" />
+	</div>
+	<br>
+
+
+
+	<br>
+
+
+   <div id="vsido_div_top">
+     <label>要求<label/>
+     <div id="vsido_output_request"></div>
+     <label>返事<label/>
+     <div id="vsido_output_response"></div>
+   </div>
+	
+  </body>
+</html>
