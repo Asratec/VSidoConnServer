@@ -29,8 +29,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "debug.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <termios.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 #include <iostream>
 #include <list>
+#include <fstream>
+#include <streambuf>
 using namespace std;
 
 
@@ -46,18 +55,30 @@ static void initEnv(void);
 #include "VSidoConnectUartConnect.hpp"
 #include "VSidoConnectUartSend.hpp"
 #include "VSidoConnectUartRead.hpp"
+#include "VSidoConnect.hpp"
 using namespace VSido;
 
 #include <memory>
 #include <thread>
 using namespace std;
+
+#include "picojson.h"
+
+
+
+
 static unique_ptr<UARTConnect> uartConn_;
 static unique_ptr<UARTSend> uartSend_;
 static unique_ptr<UARTRead> uartRead_;
 
 
+VSido::SystemInfo VSido::gSysInfo;
+void fillSystemInformation(void);
+
+
 void IOConnect(const string &device,int baudrate) throw(string)
 {
+    fillSystemInformation();
 	if(device.empty())
 	{
 		initEnv();
@@ -106,8 +127,8 @@ map<int,tuple<list<unsigned char>,chrono::milliseconds>> IOReadUart()
 	return {{}};
 }
 
-/** ��֐S�̃R�}���h��߂��B 
-* @param i �ԍ�
+/** 非関心のコマンドを戻す。 
+* @param i 番号
 * @return None
 */
 void IODeleteUartAck(int i)
@@ -119,7 +140,7 @@ void IODeleteUartAck(int i)
 }
 
 
-/** �V�K�R�}���h���s�������Ƃ���M�X���b�h�ɒʒm����
+/** 新規コマンド発行したことを受信スレッドに通知する
 * @return None
 */
 void IONotifyNewUart(void)
@@ -152,7 +173,7 @@ static string exec(string cmd)
 }
 
 
-/** ���s���K�v�ȃt�@�C���̈�����
+/** 実行時必要なファイル領域を作る
 * @param None
 * @return None
 */
@@ -265,3 +286,113 @@ static void initEnv(void)
     }
 }
 
+
+#define BAURATE(x) {"B_"#x,B##x}
+
+static map<string,int> baudrateTable =
+{
+    BAURATE(50),
+    BAURATE(75),
+    BAURATE(110),
+    BAURATE(134),
+    BAURATE(150),
+    BAURATE(200),
+    BAURATE(300),
+    BAURATE(600),
+    BAURATE(1200),
+    BAURATE(1800),
+    BAURATE(2400),
+    BAURATE(4800),
+    BAURATE(9600),
+    BAURATE(19200),
+    BAURATE(38400),
+    BAURATE(57600),
+    BAURATE(115200),
+    BAURATE(230400),
+    BAURATE(460800),
+    BAURATE(500000),
+    BAURATE(576000),
+    BAURATE(921600),
+    BAURATE(1000000),
+    BAURATE(1152000),
+    BAURATE(1500000),
+    BAURATE(2000000),
+    BAURATE(2500000),
+    BAURATE(3000000),
+    BAURATE(3500000),
+    BAURATE(4000000)
+};
+
+void readConfig(string &port ,int &baudrate)
+{
+    string systemInfo("uname -n");
+    auto uname = exec(systemInfo);
+    FATAL_VAR(uname);
+    
+    string configPah;
+    if("edison\n"== uname)
+    {
+        configPah = "/home/sysroot/usr/etc/serial";
+    }
+    else if("raspberrypi\n"== uname)
+    {
+        configPah = "/opt/vsido/usr/etc/serial";
+    }
+    else
+    {
+        
+    }
+    if(false==configPah.empty())
+    {
+        picojson::value conf;
+        ifstream t(configPah);
+        string err;
+        picojson::parse(conf, istream_iterator<char>(t),istream_iterator<char>(),&err);
+        
+        if(err.empty())
+        {
+            auto& confObj = conf.get<picojson::object>();
+            
+            if(conf.contains("port"))
+            {
+                port = confObj["port"].get<string>();
+            }
+            if(conf.contains("baudrate"))
+            {
+                auto baudrateS = confObj["baudrate"].get<string>();
+                auto it = baudrateTable.find(baudrateS);
+                if(it != baudrateTable.end())
+                {
+                    baudrate = it->second;
+                }
+            }
+        }
+        else
+        {
+            FATAL_VAR(err);
+        }
+    }
+}
+
+void fillSystemInformation(void)
+{
+    gSysInfo.linux =true;
+    string systemInfo("uname -n");
+    auto uname = exec(systemInfo);
+    FATAL_VAR(uname);
+    
+    string configPah;
+    if("edison\n"== uname)
+    {
+        gSysInfo.edison =true;
+    }
+    else if("raspberrypi\n"== uname)
+    {
+        gSysInfo.rasp =true;
+    }
+    else
+    {
+        
+    }
+    
+}

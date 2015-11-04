@@ -187,6 +187,16 @@ static int callback_vsido_motion(struct libwebsocket_context * ctx,
     		}
     		break;
     	}
+        case LWS_CALLBACK_GET_THREAD_ID:
+        {
+#ifdef __APPLE__
+            uint64_t tid;
+            pthread_threadid_np(NULL, &tid);
+            return tid;
+#else
+            return pthread_self();
+#endif
+        }
     	default:
             break;
     }

@@ -71,15 +71,6 @@ protected:
 protected:
     picojson::object _res;
 };
-class SystemInfo
-{
-public:
-	bool linux = false;
-	bool mac = false;
-	bool edison = false;
-	bool rasp = false;
-};
-extern SystemInfo gSysInfo;
 } // namespace VSido
 
 #endif //__VISIDO_REQUEST_COMMON_HPP__

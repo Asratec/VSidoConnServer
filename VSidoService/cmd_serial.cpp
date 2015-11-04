@@ -28,6 +28,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "cmd_serial.hpp"
+#include "VSido.hpp"
 using namespace VSido;
 #include <string>
 #include <iostream>
@@ -133,22 +134,24 @@ string SelectSerialJSONRequest::exec()
 		picojson::value json(jsonConfig);
 		DUMP_VAR(json.serialize());
 
-		string systemInfo("uname -n");
-	    auto uname = ::execShell(systemInfo);
-		FATAL_VAR(uname);
 		string path;
-		if("edison\n"== uname)
+		if(gSysInfo.edison)
 		{
 	        path = "/home/sysroot/usr/etc/serial";
 		}
-		else if("raspberrypi\n"== uname)
+		else if(gSysInfo.rasp)
 		{
 	        path = "/opt/vsido/usr/etc/serial";
 		}
-	    else
+	    else if(gSysInfo.osx)
 	    {
-	        // use default.
-	    }
+            path = "../etc/serial";
+        }
+        else
+        {
+            // use default.
+        }
+        FATAL_VAR(path);
 		if(false==path.empty())
 		{
 			ofstream t(path);

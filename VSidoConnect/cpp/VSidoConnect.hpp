@@ -1464,6 +1464,17 @@ namespace VSido
 		vector<unsigned char>binay();
 	};
 	
+    class SystemInfo
+    {
+    public:
+        bool linux = false;
+        bool osx = false;
+        bool edison = false;
+        bool rasp = false;
+    };
+    extern SystemInfo gSysInfo;
+    
+    
 } // namespace VSido
 
 #endif //__VSIDO_CONNECT__

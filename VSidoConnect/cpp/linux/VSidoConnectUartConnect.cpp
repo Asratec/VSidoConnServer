@@ -45,6 +45,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <thread>
 #include <iostream>
+#include <map>
+#include <fstream>
+#include <streambuf>
 using namespace std;
 
 #include "VSidoConnectUartConnect.hpp"
@@ -58,7 +61,7 @@ using namespace std;
 
 
 
-
+extern string execShell(string cmd);
 void dumpUartFlags(termios term);
 
 
@@ -279,5 +282,7 @@ void dumpUartFlags(termios term)
 	DUMP_CC_FLAGS(term.c_cc ,VWERASE);
 
 }
+
+
 
 

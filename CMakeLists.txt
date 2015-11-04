@@ -32,8 +32,11 @@ else(SUBDIR)
 	project (VSido4Linux)
 endif(SUBDIR)
 
-set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS} -std=c11 -pthread -Wconversion ")
-set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -Wconversion ")
+set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS} -std=c11 -pthread ")
+set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -std=c++11 -pthread ")
+
+#set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS} -Wconversion ")
+#set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -Wconversion ")
 
 
 set(CMAKE_C_FLAGS_DEBUG     "${CMAKE_C_FLAGS_DEBUG} -pg -g -fprofile-arcs -ftest-coverage")

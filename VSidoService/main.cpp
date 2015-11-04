@@ -59,7 +59,6 @@ using namespace VSido;
 
 string forceStrRoot;
 
-SystemInfo gSysInfo;
 
 
 /*
@@ -85,7 +84,7 @@ SystemInfo gSysInfo;
 static void sig_int_catch(int);
 static void sig_abrt_catch(int);
 static void sig_pipe_catch(int);
-static void readConfig(string &port ,int &baudrate);
+extern void readConfig(string &port ,int &baudrate);
 
 extern string execShell(string cmd);
 
@@ -178,90 +177,3 @@ void sig_pipe_catch(int sig)
 }
 
 
-
-#define BAURATE(x) {"B_"#x,B##x}
-
-static map<string,int> baudrateTable =
-{
-	BAURATE(50),
-	BAURATE(75),
-	BAURATE(110),
-	BAURATE(134),
-	BAURATE(150),
-	BAURATE(200),
-	BAURATE(300),
-	BAURATE(600),
-	BAURATE(1200),
-	BAURATE(1800),
-	BAURATE(2400),
-	BAURATE(4800),
-	BAURATE(9600),
-	BAURATE(19200),
-	BAURATE(38400),
-	BAURATE(57600),
-	BAURATE(115200),
-	BAURATE(230400),
-	BAURATE(460800),
-	BAURATE(500000),
-	BAURATE(576000),
-	BAURATE(921600),
-	BAURATE(1000000),
-	BAURATE(1152000),
-	BAURATE(1500000),
-	BAURATE(2000000),
-	BAURATE(2500000),
-	BAURATE(3000000),
-	BAURATE(3500000),
-	BAURATE(4000000)
-};
-
-void readConfig(string &port ,int &baudrate)
-{
-	string systemInfo("uname -n");
-    auto uname = execShell(systemInfo);
-	FATAL_VAR(uname);
-	
-	string configPah;
-	if("edison\n"== uname)
-	{
-		configPah = "/home/sysroot/usr/etc/serial";
-	}
-	else if("raspberrypi\n"== uname)
-    {
-    	configPah = "/opt/vsido/usr/etc/serial";
-    }
-	else
-	{
-		
-	}
-	if(false==configPah.empty())
-	{
-		picojson::value conf;
-		ifstream t(configPah);
-		string err;
-		picojson::parse(conf, istream_iterator<char>(t),istream_iterator<char>(),&err);
-		
-		if(err.empty())
-		{
-			auto& confObj = conf.get<picojson::object>();
-
-			if(conf.contains("port"))
-			{
-				port = confObj["port"].get<string>();
-			}
-			if(conf.contains("baudrate"))
-			{
-				auto baudrateS = confObj["baudrate"].get<string>();
-				auto it = baudrateTable.find(baudrateS);
-				if(it != baudrateTable.end())
-				{
-					baudrate = it->second;
-				}
-			}
-		}
-		else
-		{
-			FATAL_VAR(err);
-		}
-	}
-}

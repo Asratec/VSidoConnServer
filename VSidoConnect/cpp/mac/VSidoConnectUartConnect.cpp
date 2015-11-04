@@ -41,9 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 using namespace std;
 
-#include "uart_connect.hpp"
-#include "uart_send.hpp"
-#include "uart_read.hpp"
+#include "VSidoConnectUartConnect.hpp"
 using namespace VSido;
 
 #include "debug.h"
@@ -69,6 +67,16 @@ UARTConnect::UARTConnect(const string &dev)
     DUMP_VAR(_uart);
 }
 
+/** コンストラクタ
+ * @param dev VSidoコネクトと繋ぐデバイス
+ */
+UARTConnect::UARTConnect(const string &dev,int baud)
+:_dev(dev)
+,_baudrate(baud)
+{
+    openSPP();
+    DUMP_VAR(_uart);
+}
 
 /** URATを変更する。
 * @return UART

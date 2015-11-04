@@ -160,6 +160,7 @@ string AngleGetJSONRequest::exec()
 			);
 			_res["servo"] = picojson::value(servoArray);
 			picojson::value resValue(_res);
+            DUMP_VAR(resValue.serialize());
 			return resValue.serialize();
 		}
 		else

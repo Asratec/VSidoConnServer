@@ -108,7 +108,17 @@ lws_plat_service(struct libwebsocket_context *context, int timeout_ms)
 	context->service_tid = context->protocols[0].callback(context, NULL,
 				     LWS_CALLBACK_GET_THREAD_ID, NULL, NULL, 0);
 
+#ifndef __APPLE__
 	n = poll(context->fds, context->fds_count, timeout_ms);
+#else
+    struct libwebsocket_pollfd* fds_copy = malloc(sizeof(struct libwebsocket_pollfd) * context->fds_count);
+    memcpy(fds_copy, context->fds, sizeof(struct libwebsocket_pollfd)*context->fds_count);
+    n = poll(fds_copy, context->fds_count, timeout_ms);
+    for (int i = 0; i < context->fds_count; i++) {
+        context->fds[i].revents = fds_copy[i].revents;
+    }
+    free(fds_copy);
+#endif
 	context->service_tid = 0;
 
 	if (n == 0) /* poll timeout */ {
