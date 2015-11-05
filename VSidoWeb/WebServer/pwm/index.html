@@ -69,11 +69,12 @@ function checkOn(id){
 
 
 $(function(){
-	var CONST_SERVO_MAX = 7;
+	var CONST_PORT_MIN = 6;
+	var CONST_PORT_MAX = 7;
 	var connect = new vsido.Connect();
 	$("#pwm").click(function(){
 		var pluse = new vsido.SetPWMPulse();
-		for (i = 4; i < CONST_SERVO_MAX +1; i = i +1){
+		for (var i = CONST_PORT_MIN; i <= CONST_PORT_MAX; i = i +1){
 			var pluseReq = getValue(i,pluse);
 		}
 		$("#vsido_output_request").text('send:<'+JSON.stringify(pluse)+'>');
@@ -87,7 +88,7 @@ $(function(){
 
 
 	$("#all_select").click(function(){
-		for (i = 4; i < CONST_SERVO_MAX +1; i = i +1){
+		for (var i = CONST_PORT_MIN; i <= CONST_PORT_MAX; i = i +1){
 			checkOn(i);
 		}
 	});

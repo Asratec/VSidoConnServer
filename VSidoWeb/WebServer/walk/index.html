@@ -11,7 +11,6 @@
     <!--STYLES-->
     <link rel="stylesheet" href="/styles/importer.css">
     <link rel="stylesheet" href="/styles/jquery.mobile-1.4.5.min.css">
-    <link rel="stylesheet" href="/styles/vsido.connection.css">
     <link rel="stylesheet" href="/styles/vsido.hand.css">
     <link rel="stylesheet" href="/styles/vsido.layout.css">
     <link rel="stylesheet" href="/styles/vsido.walk.css">
@@ -20,13 +19,12 @@
 	<!--SCRIPTS-->
 <script src="/js/jquery-2.1.1.min.js"></script>
 <script src="/js/jquery.mobile-1.4.5.min.js"></script>
-<script src="/js/vsido.camera.js"></script>
 <script src="/js/vsido.canvas.acceleration.js"></script>
 <script src="/js/vsido.canvas.hand.js"></script>
 <script src="/js/vsido.canvas.joystick.js"></script>
 <script src="/js/vsido.canvas.js"></script>
 <script src="/js/vsido.canvas.sensorstick.js"></script>
-<script src="/js/vsido.web.js"></script>
+<script src="/js/vsido.client.api.js"></script>
 <!--SCRIPTS END-->
 	
 	
@@ -38,17 +36,17 @@
     
 <script type="text/javascript">
 console.log("loading JoyStick");
-var vsido = new VSidoWeb();
+var connect = new vsido.Connect();
 $(function(){
 	console.log("JoyStick.initialize");
 	JoyStick.initialize( 
 		function move(x,y){
-			var walk = vsido.walk();
 			// 90度反時計回り、切り捨て
-			walk['forward'] = (x * Math.cos(Math.PI*1.5) - y * Math.sin(Math.PI*1.5)) | 0;
-			walk['turn'] = (x * Math.sin(Math.PI*1.5) + y * Math.cos(Math.PI*1.5)) | 0;
+			var forward = (x * Math.cos(Math.PI*1.5) - y * Math.sin(Math.PI*1.5)) | 0;
+			var turn = (x * Math.sin(Math.PI*1.5) + y * Math.cos(Math.PI*1.5)) | 0;
+			var walk = new vsido.Walk(forward,turn);
 			$("#vsido_output_request").text('send:<'+JSON.stringify(walk)+'>');
-			vsido.send(walk);
+			connect.send(walk);
 		}
 	);
 });

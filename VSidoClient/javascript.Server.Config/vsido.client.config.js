@@ -85,7 +85,7 @@ vsido.SelectSerialPort = function (port,baudrate){
 	}else{
 		this.port='';
 	}
-	if(port){
+	if(baudrate){
 		this.baudrate=baudrate;
 	}else{
 		this.baudrate=115200;

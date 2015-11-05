@@ -10,22 +10,12 @@
     <!--STYLES-->
     <link rel="stylesheet" href="/styles/importer.css">
     <link rel="stylesheet" href="/styles/jquery.mobile-1.4.5.min.css">
-    <link rel="stylesheet" href="/styles/vsido.connection.css">
-    <link rel="stylesheet" href="/styles/vsido.hand.css">
-    <link rel="stylesheet" href="/styles/vsido.layout.css">
-    <link rel="stylesheet" href="/styles/vsido.walk.css">
     <!--STYLES END-->
     
 	<!--SCRIPTS-->
 <script src="/js/jquery-2.1.1.min.js"></script>
 <script src="/js/jquery.mobile-1.4.5.min.js"></script>
-<script src="/js/vsido.camera.js"></script>
-<script src="/js/vsido.canvas.acceleration.js"></script>
-<script src="/js/vsido.canvas.hand.js"></script>
-<script src="/js/vsido.canvas.joystick.js"></script>
-<script src="/js/vsido.canvas.js"></script>
-<script src="/js/vsido.canvas.sensorstick.js"></script>
-<script src="/js/vsido.web.js"></script>
+<script src="/js/vsido.client.api.js"></script>
 <!--SCRIPTS END-->
 	
 	
@@ -36,26 +26,15 @@
 
     <script type="text/javascript">
 $(function(){
-  var vsido = new VSidoWeb();
+  var connect = new vsido.Connect();
 /*
  サーボ2
 */
   $("#vsido_range_servo_2").change(function(){
-    	console.log('vsido_range_servo_2');
-		var angle = vsido.servoAngle();
-		console.log(JSON.stringify(angle));
-		angle["cycle"] = 100;
-		angle["servo"].push(
-			{
-				"sid":2,
-				"angle":parseInt($(this).val())
-			}
-		);
-		console.log(JSON.stringify(angle));
-		
+		var angle = new vsido.SetServoAngle(100);
+		angle.addAngle(2,parseFloat($(this).val()));
 		$("#vsido_output_request").text('send:<'+JSON.stringify(angle)+'>');
-		vsido.send(angle,function(response,timeResponse) {
-			console.log(JSON.stringify(response));
+		connect.send(angle,function(response,timeResponse) {
 			$("#vsido_output_response").text(
 				'response:<' + JSON.stringify(response) + '>' +
 				'resTime:<' + timeResponse + 'ms>'
@@ -66,20 +45,16 @@ $(function(){
  サーボ3
 */
   $("#vsido_range_servo_3").change(function(){
-    	console.log('vsido_range_servo_3');
-		var angle = vsido.servoAngle();
-		console.log(JSON.stringify(angle));
-		angle["cycle"] = 100;
-		angle["servo"].push(
-			{
-				"sid":3,
-				"angle":parseInt($(this).val())
-			}
-		);
-		console.log(JSON.stringify(angle));
-		vsido.send(angle);
+		var angle = new vsido.SetServoAngle(100);
+		angle.addAngle(3,parseFloat($(this).val()));
+		$("#vsido_output_request").text('send:<'+JSON.stringify(angle)+'>');
+		connect.send(angle,function(response,timeResponse) {
+			$("#vsido_output_response").text(
+				'response:<' + JSON.stringify(response) + '>' +
+				'resTime:<' + timeResponse + 'ms>'
+			);
+		});
     });
-
 });
 
 </script>

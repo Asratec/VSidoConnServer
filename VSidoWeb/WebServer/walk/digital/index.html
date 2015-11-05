@@ -11,7 +11,6 @@
     <!--STYLES-->
     <link rel="stylesheet" href="/styles/importer.css">
     <link rel="stylesheet" href="/styles/jquery.mobile-1.4.5.min.css">
-    <link rel="stylesheet" href="/styles/vsido.connection.css">
     <link rel="stylesheet" href="/styles/vsido.hand.css">
     <link rel="stylesheet" href="/styles/vsido.layout.css">
     <link rel="stylesheet" href="/styles/vsido.walk.css">
@@ -20,13 +19,12 @@
 	<!--SCRIPTS-->
 <script src="/js/jquery-2.1.1.min.js"></script>
 <script src="/js/jquery.mobile-1.4.5.min.js"></script>
-<script src="/js/vsido.camera.js"></script>
 <script src="/js/vsido.canvas.acceleration.js"></script>
 <script src="/js/vsido.canvas.hand.js"></script>
 <script src="/js/vsido.canvas.joystick.js"></script>
 <script src="/js/vsido.canvas.js"></script>
 <script src="/js/vsido.canvas.sensorstick.js"></script>
-<script src="/js/vsido.web.js"></script>
+<script src="/js/vsido.client.api.js"></script>
 <!--SCRIPTS END-->
 	
 	
@@ -36,43 +34,35 @@
     <a href="/" target="_self">トップに戻る</a>
 
     <script type="text/javascript">
-	var vsido = new VSidoWeb();
+	var connect = new vsido.Connect();
 	var inertval = 500; 
 	var forward = 0;
 	function doForward() {
 		forward = forward + 1;
-		var walk = vsido.walk();
-		walk['forward'] = forward;
-		walk['turn'] = 0;
+		var walk = new vsido.Walk(forward,0);
 		console.log(JSON.stringify(walk));
-		vsido.send(walk);
+		connect.send(walk);
 	}
 	var backward = 0;
 	function doBackward() {
 		backward = backward + 1;
-		var walk = vsido.walk();
-		walk['forward'] = 0 - backward;
-		walk['turn'] = 0;
+		var walk = new vsido.Walk(0 - backward,0);
 		console.log(JSON.stringify(walk));
-		vsido.send(walk);
+		connect.send(walk);
 	}
 	var left = 0;
 	function doLeft() {
 		left = left + 1;
-		var walk = vsido.walk();
-		walk['forward'] = 0;
-		walk['turn'] = left;
+		var walk =new  vsido.Walk(0,left);
 		console.log(JSON.stringify(walk));
-		vsido.send(walk);
+		connect.send(walk);
 	}
 	var right = 0;
 	function doRight() {
 		right = right + 1;
-		var walk = vsido.walk();
-		walk['forward'] = 0;
-		walk['turn'] = 0 - right;
+		var walk = vsido.Walk(0,0 - right);
 		console.log(JSON.stringify(walk));
-		vsido.send(walk);
+		connect.send(walk);
 	}
 	$(function(){
 		var timerForward = null;

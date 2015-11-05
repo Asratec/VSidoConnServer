@@ -11,22 +11,19 @@
     <!--STYLES-->
     <link rel="stylesheet" href="/styles/importer.css">
     <link rel="stylesheet" href="/styles/jquery.mobile-1.4.5.min.css">
-    <link rel="stylesheet" href="/styles/vsido.connection.css">
     <link rel="stylesheet" href="/styles/vsido.hand.css">
     <link rel="stylesheet" href="/styles/vsido.layout.css">
-    <link rel="stylesheet" href="/styles/vsido.walk.css">
     <!--STYLES END-->
     
 	<!--SCRIPTS-->
 <script src="/js/jquery-2.1.1.min.js"></script>
 <script src="/js/jquery.mobile-1.4.5.min.js"></script>
-<script src="/js/vsido.camera.js"></script>
 <script src="/js/vsido.canvas.acceleration.js"></script>
 <script src="/js/vsido.canvas.hand.js"></script>
 <script src="/js/vsido.canvas.joystick.js"></script>
 <script src="/js/vsido.canvas.js"></script>
 <script src="/js/vsido.canvas.sensorstick.js"></script>
-<script src="/js/vsido.web.js"></script>
+<script src="/js/vsido.client.api.js"></script>
 <!--SCRIPTS END-->
 	
 	
@@ -36,7 +33,7 @@
     <a href="/" target="_self">トップに戻る</a>
 
     <script type="text/javascript">
-	var vsido = new VSidoWeb();
+	var connect = new vsido.Connect();
 	var lastTimeStamp = null;
 	var lastX = 0;
 	var deltaX = 0;
@@ -62,18 +59,10 @@
 				{
 					return;
 				}
-				var ik = vsido.ik();
-				var kdt = vsido.kdt();
-				ik['ikf']['dist']['pos'] = true;
-				kdt['kid'] = 1;
-				kdt['kdt']['pos']['x'] = 100 * deltaX/90 | 0;
-				kdt['kdt']['pos']['y'] = py;
-				kdt['kdt']['pos']['z'] = pz;
-				
-				ik['kdts'].push(kdt);
+				var ik = new vsido.SetIK({'position':true});
+				ik.setPosition('head',100 * deltaX/90 | 0,py,pz);
 				$("#vsido_output_request").text('send:<'+JSON.stringify(ik)+'>');
-				vsido.send(ik);
-
+				connect.send(ik);
 			});
 		});	
 	  $('#vsido_head_stop').click(function(){

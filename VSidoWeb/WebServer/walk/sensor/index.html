@@ -20,13 +20,12 @@
 	<!--SCRIPTS-->
 <script src="/js/jquery-2.1.1.min.js"></script>
 <script src="/js/jquery.mobile-1.4.5.min.js"></script>
-<script src="/js/vsido.camera.js"></script>
 <script src="/js/vsido.canvas.acceleration.js"></script>
 <script src="/js/vsido.canvas.hand.js"></script>
 <script src="/js/vsido.canvas.joystick.js"></script>
 <script src="/js/vsido.canvas.js"></script>
 <script src="/js/vsido.canvas.sensorstick.js"></script>
-<script src="/js/vsido.web.js"></script>
+<script src="/js/vsido.client.api.js"></script>
 <!--SCRIPTS END-->
 	
 	
@@ -38,13 +37,13 @@
     
 <script type="text/javascript">
 console.log("loading JoyStick");
-var vsido = new VSidoWeb();
+var connect = new vsido.Connect();
 $(function(){
 	SensorStick.initialize( 
 		function move(x,y){
-			var walk = vsido.walk();
-			walk['forward'] = x * Math.cos(Math.PI*1.5) - y * Math.sin(Math.PI*1.5);
-			walk['turn'] = x * Math.sin(Math.PI*1.5) + y * Math.cos(Math.PI*1.5);
+			var forward = x * Math.cos(Math.PI*1.5) - y * Math.sin(Math.PI*1.5);
+			var turn = x * Math.sin(Math.PI*1.5) + y * Math.cos(Math.PI*1.5);
+			var walk = new vsido.Walk(forward,turn);
 			$("#vsido_output_request").text('send:<'+JSON.stringify(walk)+'>');
 			vsido.send(walk);
 		}

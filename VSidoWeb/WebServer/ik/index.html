@@ -11,22 +11,19 @@
     <!--STYLES-->
     <link rel="stylesheet" href="/styles/importer.css">
     <link rel="stylesheet" href="/styles/jquery.mobile-1.4.5.min.css">
-    <link rel="stylesheet" href="/styles/vsido.connection.css">
     <link rel="stylesheet" href="/styles/vsido.hand.css">
     <link rel="stylesheet" href="/styles/vsido.layout.css">
-    <link rel="stylesheet" href="/styles/vsido.walk.css">
     <!--STYLES END-->
     
 	<!--SCRIPTS-->
 <script src="/js/jquery-2.1.1.min.js"></script>
 <script src="/js/jquery.mobile-1.4.5.min.js"></script>
-<script src="/js/vsido.camera.js"></script>
 <script src="/js/vsido.canvas.acceleration.js"></script>
 <script src="/js/vsido.canvas.hand.js"></script>
 <script src="/js/vsido.canvas.joystick.js"></script>
 <script src="/js/vsido.canvas.js"></script>
 <script src="/js/vsido.canvas.sensorstick.js"></script>
-<script src="/js/vsido.web.js"></script>
+<script src="/js/vsido.client.api.js"></script>
 <!--SCRIPTS END-->
 	
 	
@@ -36,57 +33,29 @@
     <a href="/" target="_self">トップに戻る</a>
 
     <script type="text/javascript">
-	var vsido = new VSidoWeb();
+	var connect = new vsido.Connect();
 	$(function(){
 		// Z軸
 		$('#vsido_div_hand_z_range').change(function(){
-			var ik = vsido.ik();
-			ik['ikf']['dist']['pos'] = true;
-
-			var px = 0;
-			var py = 0;
-			var pz = parseInt($('#vsido_div_hand_z_range').val());
-			var kdt = vsido.kdt();
-			kdt['kid'] = 3;
-			kdt['kdt']['pos']['x'] = px;
-			kdt['kdt']['pos']['y'] = py;
-			kdt['kdt']['pos']['z'] = pz;
-			
-			ik['kdts'].push(kdt);
-
+			var ik = new vsido.SetIK({'position':true});
+			ik.setPosition('left_hand',0,0,parseInt($('#vsido_div_hand_z_range').val()));
 			$("#vsido_output_request").text('send:<'+JSON.stringify(ik)+'>');
-			vsido.send(ik);
-			
+			connect.send(ik);
 		});
 		// xy軸
 		Hand.initialize( 
 			function move(x,y){
-				var ik = vsido.ik();
-				ik['ikf']['dist']['pos'] = true;
+				var ik = new vsido.SetIK({'position':true});
 				
 				// 切り捨て
 				var px = x | 0;
 				var py = y | 0;
 				var pz = parseInt($('#vsido_div_hand_z_range').val());
-				var kdt = vsido.kdt();
-				kdt['kid'] = 3;
-				kdt['kdt']['pos']['x'] = px;
-				kdt['kdt']['pos']['y'] = py;
-				kdt['kdt']['pos']['z'] = pz;
-				
-				ik['kdts'].push(kdt);
+				ik.setPosition('left_hand',px,py,pz);
 				$("#vsido_output_request").text('send:<'+JSON.stringify(ik)+'>');
-				vsido.send(ik);
+				connect.send(ik);
 			}
 		);
-		
-		// sample to read ik
-		var readIK = vsido.readIK();
-		readIK['ikf']['cur']['pos'] = true;
-		
-		$("#vsido_output_request").text('send:<'+JSON.stringify(readIK)+'>');
-		vsido.send(readIK);
-		
 	});
 </script>
 
