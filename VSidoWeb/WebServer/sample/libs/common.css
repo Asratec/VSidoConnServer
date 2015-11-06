@@ -95,3 +95,7 @@ body:after{
 .error{
 	border:1px solid red;
 }
+#send,#response{
+	-webkit-user-select:auto;
+	word-wrap: break-word;
+}

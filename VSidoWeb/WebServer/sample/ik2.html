@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="Shift-JIS">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />  
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<title>V-SidoWeb TargetAngel</title>
+	
+	<script src="./libs/jquerymobile/1.4.3/jquery.mobile.min.js"></script>
+	<link rel="stylesheet" href="./libs/jqueryui/1.11.2/themes/smoothness/jquery-ui.css" />
+	<script src="./libs/jquery/2.1.1/jquery.min.js"></script>
+	<script src="./libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+	<script src="./libs/jquery/jquery.ui.touch-punch.min.js"></script>
+	<script src="./libs/common.js"></script>
+	<link rel="stylesheet" href="./libs/common.css" />
+	
+	<!-- V-SidoClient Apiの挿入 -->
+	<script src="./js/vsido.client.api.js"></script>
+
+	<script>
+	$(function(){
+		var connect=null;
+		var qparam=getUrlVars()['setip'];
+		if(qparam){
+			connect=new vsido.Connect({'ip':qparam});
+		}else{
+			connect=new vsido.Connect();
+		}
+		
+		// IK情報の取得コマンド
+		$('#btn_get').on('click',function(){
+			var ikflag = {'position':false,'torque':false,'rotation':false};
+			var ikflags=$('.cellactive2');
+			if(!ikflags.length) return;
+			for(var i=0;i<ikflags.length;i++){
+				var flag=$(ikflags[i]).data('flag');
+				ikflag[flag]=true;
+			}
+			
+			var ik = new vsido.GetIK(ikflag);
+			var ikclass=$('.cellactive');
+			if(!ikclass.length) return;
+			for(var j=0;j<ikclass.length;j++){
+				var kid=$(ikclass[j]).data('kid');			
+				ik.addKID(parseInt(kid));
+			}
+
+			console.log('send:<'+JSON.stringify(ik)+'>');
+			connect.send(ik,function(response){
+				console.log(JSON.stringify(response));
+				for(var j in response['kdt']) {
+					var obj=response['kdt'][j];
+					var uiid="#"+obj['kid'];
+					var contents=$(uiid).find('.textinput');
+					
+					if(typeof(obj['position']) != "undefined"){
+						$(contents[0]).val(obj['position']['x']);
+						$(contents[1]).val(obj['position']['y']);
+						$(contents[2]).val(obj['position']['z']);
+					}
+
+					if(typeof(obj['torque']) != "undefined"){
+						$(contents[3]).val(obj['torque']['x']);
+						$(contents[4]).val(obj['torque']['y']);
+						$(contents[5]).val(obj['torque']['z']);
+					}
+
+					if(typeof(obj['rotation']) != "undefined"){
+						$(contents[6]).val(obj['rotation']['x']);
+						$(contents[7]).val(obj['rotation']['y']);
+						$(contents[8]).val(obj['rotation']['z']);
+					}
+				}
+			});
+		});
+		
+		// IK情報の設定コマンド
+		$('#btn_set').on('click',function(){
+			var ikflag = {'position':false,'torque':false,'rotation':false};
+			
+			var ikflags=$('.cellactive2');
+			if(!ikflags.length) return;
+			for(var i=0;i<ikflags.length;i++){
+				var flag=$(ikflags[i]).data('flag');
+				ikflag[flag]=true;
+			}
+			
+			var ik = new vsido.SetIK(ikflag);
+			var ikclass=$('.cellactive');
+			if(!ikclass.length) return;
+			for(var j=0;j<ikclass.length;j++){
+				var kid=$(ikclass[j]).data('kid');
+				var kidstr=vsido.KID_ITEM[kid];
+				var contents=$(ikclass[j]).find('.textinput');
+				ik.setPosition(kidstr,parseFloat($(contents[0]).val()),parseFloat($(contents[1]).val()),parseFloat($(contents[2]).val()));
+				ik.setTorque(kidstr,parseFloat($(contents[3]).val()),parseFloat($(contents[4]).val()),parseFloat($(contents[5]).val()));
+				ik.setRotation(kidstr,parseFloat($(contents[6]).val()),parseFloat($(contents[7]).val()),parseFloat($(contents[8]).val()));
+			}
+			console.log('send:<'+JSON.stringify(ik)+'>');
+			connect.send(ik,function(response){
+				console.log(JSON.stringify(response));
+			});
+		});
+		
+		
+		$('#btn_toggle').on('click',function(){
+			var objs=$('.cellactive');
+			var elems=$('.selectablecell');
+			if(objs.length){
+				for(var i=0;i<elems.length;i++){
+					$(elems[i]).removeClass('cellactive');
+				}			
+			}else{
+				for(var i=0;i<elems.length;i++){
+					if($(elems[i]).hasClass('cellactive')) continue;
+					$(elems[i]).addClass('cellactive');
+				}
+			}
+		});
+		
+		$('body')
+		.on('change','.textinput',function(){
+			this.value=this.value.replace(/[^0-9\.-]/g,'');
+			if(!this.value){
+				this.value=0;
+				var parent=$(this).parent();
+				parent.removeClass('cellactive');
+			}
+		})
+		.on('click touchend','.textinput',function(event){
+			event.stopPropagation();
+		});
+
+		$('body').on('click touchend','.selectablecell',function(){
+			var obj=$(this);
+			if(obj.hasClass('cellactive')){
+				obj.removeClass('cellactive');
+			}else{
+				obj.addClass('cellactive');
+			}
+		});
+		$('body').on('click touchend','.selectablecell2',function(){
+			var obj=$(this);
+			if(obj.hasClass('cellactive2')){
+				obj.removeClass('cellactive2');
+			}else{
+				obj.addClass('cellactive2');
+			}
+		});
+		
+		// 表示項目の動的生成
+		var kiddata=["head","right_hand","left_hand","right_foot","left_foot"];
+		var tabledat=["x","y","z","Tx","Ty","Tz","Rx","Ry","Rz"];
+		$(window)
+		.on('pageshow',function(){
+			var cells=$('.selectablecell');
+			for(var i=0;i<cells.length;i++){
+				var d=document.createDocumentFragment();
+				var div;
+				div=document.createElement('div');
+				div.innerHTML='<h2>'+kiddata[i]+'</h2><br>';
+				d.appendChild(div);
+				for(var j=0;j<tabledat.length;j++){
+					div=document.createElement('div');
+					var textelem='<input type="text" class="textinput" size="10" value="0" '+'data-class="'+tabledat[j]+'" />';
+					div.innerHTML='<b>'+tabledat[j]+'</b>'+textelem;
+					d.appendChild(div);
+				}
+				$(cells[i]).append(d);
+			}
+		});
+	});
+	</script>
+
+	<style>
+	h1{display:none;}
+	#btn_toggle,#btn_get,#btn_set{
+		margin:0.2em auto;
+		padding:0.8em;
+		font-weight:bold;
+		display:table;
+	}
+	#btn_toggle:hover,#btn_get:hover,#btn_set:hover{
+		cursor:pointer;
+		color:#FFF;
+	}
+	.cellactive,.cellactive2{
+		background:#117;
+	}
+	.selectablecell,.selectablecell2{
+		width:50%;
+		margin:auto;
+		border:1px solid #B6B7B1;
+		padding:1em;
+	}
+	.textinput{
+		margin:1em;
+		text-align:center;
+	}
+	#celltable{
+		height:30em;
+		overflow-x:hidden;
+		overflow-y:scroll;
+	}
+	</style>
+</head>
+
+<body>
+	<div id="nav-ip">
+		<br>
+		<h2>IPアドレス</h2>
+		<input type="text" id="ip-1" value="">
+		<input type="text" id="ip-2" value="">
+		<input type="text" id="ip-3" value="">
+		<input type="text" id="ip-4" value="">
+		<div id="ipset">設定</div>
+	</div>
+	<div id="nav-div">
+		<div class="mainbtn" data-id="0" title="">ホームに戻る</div>
+	</div>
+	<div id="content-div">
+		<div id="btn_toggle" title="">トグル選択</div>
+		<div id="btn_get" title="">IK取得</div>
+		<div id="btn_set" title="">IK設定</div>
+		<br>
+		<h2>IK FLAGS</h2>
+		<br>
+		<div class="selectablecell2" data-flag="position" title=""><b>Position</b></div>
+		<div class="selectablecell2" data-flag="torque" title=""><b>Torque</b></div>
+		<div class="selectablecell2" data-flag="rotation" title=""><b>Rotation</b></div>
+		<br>
+		<br>
+		<div class="selectablecell" id="head" data-kid="1"></div>
+		<div class="selectablecell" id="right_hand" data-kid="2"></div>
+		<div class="selectablecell" id="left_hand" data-kid="3"></div>
+		<div class="selectablecell" id="right_foot" data-kid="4"></div>
+		<div class="selectablecell" id="left_foot" data-kid="5"></div>
+	</div>
+	<div id="info-div">
+		<div id="send"></div>
+		<div id="response"></div>
+	<div>
+	<div class="spacer"></div>
+</body>
+</html>

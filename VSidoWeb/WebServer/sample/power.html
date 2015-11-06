@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="Shift-JIS">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />  
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<title>V-SidoWeb TargetAngel</title>
+	
+	<script src="./libs/jquerymobile/1.4.3/jquery.mobile.min.js"></script>
+	<link rel="stylesheet" href="./libs/jqueryui/1.11.2/themes/smoothness/jquery-ui.css" />
+	<script src="./libs/jquery/2.1.1/jquery.min.js"></script>
+	<script src="./libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+	<script src="./libs/jquery/jquery.ui.touch-punch.min.js"></script>
+	<script src="./libs/common.js"></script>
+	<link rel="stylesheet" href="./libs/common.css" />
+	
+	<!-- V-SidoClient Apiの挿入 -->
+	<script src="./js/vsido.client.api.js"></script>
+
+	<script>
+	$(function(){
+		var connect=null;
+		var qparam=getUrlVars()['setip'];
+		if(qparam){
+			connect=new vsido.Connect({'ip':qparam});
+		}else{
+			connect=new vsido.Connect();
+		}
+		
+		// サーボの電源電圧取得コマンド
+		$('#btn_power').click(function(){
+			$('#send').empty();
+			$('#response').empty();
+		
+			var obj=$(this);
+			var power = new vsido.GetVoltage();
+			$('#send').text('send:<'+JSON.stringify(power)+'>');
+			connect.send(power,function(response){
+				$('#response').text('response:<'+JSON.stringify(response)+'>');
+			});
+		})
+	});
+	</script>
+
+	<style>
+	h1{display:none;}
+	#btn_power{
+		margin:0.2em auto;
+		padding:0.8em;
+		font-weight:bold;
+		display:table;
+	}
+	#btn_power:hover{
+		cursor:pointer;
+		color:#FFF;
+	}
+	</style>
+</head>
+
+<body>
+	<div id="nav-ip">
+		<br>
+		<h2>IPアドレス</h2>
+		<input type="text" id="ip-1" value="">
+		<input type="text" id="ip-2" value="">
+		<input type="text" id="ip-3" value="">
+		<input type="text" id="ip-4" value="">
+		<div id="ipset">設定</div>
+	</div>
+	<div id="nav-div">
+		<div class="mainbtn" data-id="0" title="">ホームに戻る</div>
+	</div>
+	<div id="content-div">
+		<font size="2" color="#ff0000">RC版未対応</font>
+		<div id="btn_power" title="">電源電圧取得</div>
+	</div>
+	<div id="info-div">
+		<div id="send"></div>
+		<div id="response"></div>
+	<div>
+	<div class="spacer"></div>
+</body>
+</html>

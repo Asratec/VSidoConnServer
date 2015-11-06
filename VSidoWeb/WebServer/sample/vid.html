@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="Shift-JIS">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />  
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<title>V-SidoWeb TargetAngel</title>
+	
+	<script src="./libs/jquerymobile/1.4.3/jquery.mobile.min.js"></script>
+	<link rel="stylesheet" href="./libs/jqueryui/1.11.2/themes/smoothness/jquery-ui.css" />
+	<script src="./libs/jquery/2.1.1/jquery.min.js"></script>
+	<script src="./libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+	<script src="./libs/jquery/jquery.ui.touch-punch.min.js"></script>
+	<script src="./libs/common.js"></script>
+	<link rel="stylesheet" href="./libs/common.css" />
+	
+	<!-- V-SidoClient Apiの挿入 -->
+	<script src="./js/vsido.client.api.js"></script>
+
+	<script>
+	$(function(){
+		var connect=null;
+		var qparam=getUrlVars()['setip'];
+		if(qparam){
+			connect=new vsido.Connect({'ip':qparam});
+		}else{
+			connect=new vsido.Connect();
+		}
+		
+		// VID関連項目
+		var VID_CONTENTS = [
+			'RS485_Baudrate',
+			'TTL_Baudrate',
+			'RS232_Baudrate',
+			'IO_PA_IO_Mode',
+			'IO_PA_Analog_Mode',
+			'IO_PA_PWM',	
+			'IO_PA_PWM_CYCLE',
+			'Through_Port',
+			'Servo_Type_RS485',
+			'Servo_Type_TTL',
+			'IMU_Type',	
+			'Balancer_Flag',
+			'Theta_Th',	
+			'Cycletime',	
+			'Min_Cmp',		
+			'Flag_Ack',	
+			'Volt_Th',		
+			'Initialize_Torque',
+			'Initialize_Angle',
+			'Inspection_Flag',
+			'Inspection_Type',
+			'Robot_Model',	
+			'UID_Flag'
+		];
+		
+		// フラッシュ書き込みコマンド
+		$('#btn_flash').click(function(){
+			var write = new vsido.WriteFlash();
+			$("#send").text('send:<'+JSON.stringify(write)+'>');
+			connect.send(write,function(response){
+				console.log(JSON.stringify(response));
+				$("#response").text(
+					'response:<' + JSON.stringify(response) + '>'
+				);
+			});
+		});
+		
+		// VID情報の取得コマンド
+		$('#btn_get').click(function(){
+			var vid = new vsido.GetVIDValue();
+			var selected=$('.cellactive');
+			if(!selected.length) return;
+			for(var i=0;i<selected.length;i++){
+				var key=$(selected[i]).attr('id');
+				vid.addVID(key);
+			}
+			$('#send').text('send:<'+JSON.stringify(vid)+'>');
+			connect.send(vid,function(response){
+				$('#response').text(
+					'response:<' + JSON.stringify(response) + '>'
+				);
+				for(var j in response['vid']){
+					var uiid='#'+j;
+					$(uiid).find('.textinput').val(response['vid'][j]);
+				}
+			})
+		});
+		
+		// VID情報の設定コマンド
+		$('#btn_set').click(function(){
+			var vid = new vsido.SetVIDValue();
+			var selected=$('.cellactive');
+			if(!selected.length) return;
+			for(var i=0;i<selected.length;i++){
+				var strid=$(selected[i]).attr('id');
+				var val=$(selected[i]).find('.textinput').val();
+				vid.addValue(strid,parseInt(val));
+			}
+			$("#send").text('send:<'+JSON.stringify(vid)+'>');
+			connect.send(vid,function(response){
+				$("#response").text(
+					'response:<' + JSON.stringify(response) + '>'
+				);
+			});
+		});
+		
+		
+		$('#btn_toggle').on('click',function(){
+			var objs=$('.cellactive');
+			var elems=$('.selectablecell');
+			if(objs.length){
+				for(var i=0;i<elems.length;i++){
+					$(elems[i]).removeClass('cellactive');
+				}			
+			}else{
+				for(var i=0;i<elems.length;i++){
+					if($(elems[i]).hasClass('cellactive')) continue;
+					$(elems[i]).addClass('cellactive');
+				}
+			}
+		});
+		
+		$('body')
+		.on('change','.textinput',function(){
+			this.value=this.value.replace(/[^0-9\.-]/g,'');
+			if(!this.value){
+				this.value=0;
+				var parent=$(this).parent();
+				parent.removeClass('cellactive');
+			}
+		})
+		.on('click touchend','.textinput',function(event){
+			event.stopPropagation();
+		});
+		
+		$('body').on('click touchend','.selectablecell',function(){
+			var obj=$(this);
+			
+			if(obj.hasClass('cellactive')){
+				obj.removeClass('cellactive');
+			}else{
+				obj.addClass('cellactive');
+			}
+		});
+		
+		// 表示の動的生成
+		$(window)
+		.on('pageshow',function(){
+			var d=document.createDocumentFragment();
+			var div;
+			var contentlength=VID_CONTENTS.length;
+			var textelem='<input type="text" class="textinput" size="10" value="0" />';
+			for(var i=0;i<contentlength;i++){
+				div=document.createElement('div');
+				div.innerHTML='<b>'+VID_CONTENTS[i]+'</b><br>'+textelem;
+				div.id=VID_CONTENTS[i];
+				div.className='selectablecell';
+				d.appendChild(div);
+			}
+			$('#table-info').append(d);
+		});	
+		
+	});
+	</script>
+
+	<style>
+	h1{display:none;}
+	#btn_toggle,#btn_get,#btn_set,#btn_flash{
+		margin:0.2em auto;
+		padding:0.8em;
+		font-weight:bold;
+		display:table;
+	}
+	#btn_toggle:hover,#btn_get:hover,#btn_set:hover,#btn_flash:hover{
+		cursor:pointer;
+		color:#FFF;
+	}
+	.cellactive{
+		background:#117;
+	}
+	.selectablecell{
+		width:50%;
+		margin:auto;
+		border:1px solid #B6B7B1;
+		padding:1em;
+	}
+	.textinput{
+		margin:1em;
+		text-align:center;
+	}
+	</style>
+</head>
+
+<body>
+	<div id="nav-ip">
+		<br>
+		<h2>IPアドレス</h2>
+		<input type="text" id="ip-1" value="">
+		<input type="text" id="ip-2" value="">
+		<input type="text" id="ip-3" value="">
+		<input type="text" id="ip-4" value="">
+		<div id="ipset">設定</div>
+	</div>
+	<div id="nav-div">
+		<div class="mainbtn" data-id="0" title="">ホームに戻る</div>
+	</div>
+	<div id="content-div">
+		<div id="btn_toggle" title="">トグル選択</div>
+		<div id="btn_get" title="">取得</div>
+		<div id="btn_set" title="">設定</div>
+	</div>
+	<div id="info-div">
+		<div id="table-info"></div>
+		<br>
+		<div id="btn_flash" title="">フラッシュ書き込み</div>
+		<br>
+		<div id="send"></div>
+		<div id="response"></div>
+	<div>
+	<div class="spacer"></div>
+</body>
+</html>

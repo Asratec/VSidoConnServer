@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="Shift-JIS">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />  
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<title>V-SidoWeb TargetAngel</title>
+	
+	<script src="./libs/jquerymobile/1.4.3/jquery.mobile.min.js"></script>
+	<link rel="stylesheet" href="./libs/jqueryui/1.11.2/themes/smoothness/jquery-ui.css" />
+	<script src="./libs/jquery/2.1.1/jquery.min.js"></script>
+	<script src="./libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+	<script src="./libs/jquery/jquery.ui.touch-punch.min.js"></script>
+	<script src="./libs/common.js"></script>
+	<link rel="stylesheet" href="./libs/common.css" />
+	
+	<!-- V-SidoClient Apiの挿入 -->
+	<script src="./js/vsido.client.api.js"></script>
+
+	<script>
+	$(function(){
+		var connect=null;
+		var qparam=getUrlVars()['setip'];
+		if(qparam){
+			connect=new vsido.Connect({'ip':qparam});
+		}else{
+			connect=new vsido.Connect();
+		}
+		
+		// GPIO項目の設定コマンド
+		$('#btn_set').click(function(){
+			var io = new vsido.SetGPIOValue();
+			var selactive=$('.cellactive');
+			if(!selactive.length) return;
+			for(var i=0;i<selactive.length;i++){
+				var elem=$(selactive[i]);
+				var id=elem.data('id');
+				var textinput=elem.find('input[type="text"]');
+				var val=parseInt(textinput.val());
+				textinput.val(val);
+				if(isNaN(val)){
+					continue;
+				}
+				var dat={'port':parseInt(id),'val':parseInt(val)}
+				io["gpio"].push(dat);
+			}
+			$('#send').text('send:<'+JSON.stringify(io)+'>');
+			connect.send(io,function(response){
+				$('#response').text('response:<'+JSON.stringify(response)+'>');
+			});
+		});
+		
+
+		$('#btn_toggle').on('click',function(){
+			var objs=$('.cellactive');
+			var elems=$('.selectablecell');
+			if(objs.length){
+				for(var i=0;i<elems.length;i++){
+					$(elems[i]).removeClass('cellactive');
+				}			
+			}else{
+				for(var i=0;i<elems.length;i++){
+					if($(elems[i]).hasClass('cellactive')) continue;
+					$(elems[i]).addClass('cellactive');
+				}
+			}
+		});
+		
+		$('.textinput')
+		.on('change',function(){
+			this.value=this.value.replace(/[^0-9\.-]/g,'');
+			if(!this.value){
+				this.value=0;
+				var parent=$(this).parent();
+				parent.removeClass('cellactive');
+			}
+		})
+		.on('click touchend',function(event){
+			event.stopPropagation();
+		});
+		
+		$('.selectablecell').on('click touchend',function(){
+			var obj=$(this);
+			
+			if(obj.hasClass('cellactive')){
+				obj.removeClass('cellactive');
+			}else{
+				obj.addClass('cellactive');
+			}
+		});
+	});
+	</script>
+
+	<style>
+	h1{display:none;}
+	#btn_toggle,#btn_set{
+		margin:0.2em auto;
+		padding:0.8em;
+		font-weight:bold;
+		display:table;
+	}
+	#btn_toggle:hover,#btn_set:hover{
+		cursor:pointer;
+		color:#FFF;
+	}
+	.cellactive{
+		background:#117;
+	}
+	.selectablecell{
+		width:50%;
+		margin:auto;
+		border:2px solid #B6B7B1;
+		padding:1em;
+	}
+	.textinput{
+		text-align:center;
+		margin:1em;
+	}
+	</style>
+</head>
+
+<body>
+	<div id="nav-ip">
+		<br>
+		<h2>IPアドレス</h2>
+		<input type="text" id="ip-1" value="">
+		<input type="text" id="ip-2" value="">
+		<input type="text" id="ip-3" value="">
+		<input type="text" id="ip-4" value="">
+		<div id="ipset">設定</div>
+	</div>
+	<div id="nav-div">
+		<div class="mainbtn" data-id="0" title="">ホームに戻る</div>
+	</div>
+	<div id="content-div">
+		<div id="btn_toggle" title="">トグル選択</div>
+		<div id="btn_set" title="">設定</div>
+	</div>
+	<div id="info-div">
+		<div class="selectablecell" data-id="4"><b>ポート４： <input type="text" class="textinput" size="10" value="0" /></b></div>
+		<div class="selectablecell" data-id="5"><b>ポート５： <input type="text" class="textinput" size="10" value="0" /></b></div>
+		<div class="selectablecell" data-id="6"><b>ポート６： <input type="text" class="textinput" size="10" value="0" /></b></div>
+		<div class="selectablecell" data-id="7"><b>ポート７： <input type="text" class="textinput" size="10" value="0" /></b></div>
+		<br>
+		<div id="send"></div>
+		<div id="response"></div>
+	<div>
+	<div class="spacer"></div>
+</body>
+</html>
