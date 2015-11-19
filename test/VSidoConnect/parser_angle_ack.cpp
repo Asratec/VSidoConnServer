@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(test_case_AckResponse_0)
 	AngleRequest req;
 	req.cycle(10);
 	req.angle(2,100);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	dumpTestData(sendBuffer);
 	
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(test_case_AckResponse_2)
 	
 	ComplianceRequest req;
 	req.comp(2,10,20);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	dumpTestData(sendBuffer);
 	
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(test_case_AckResponse_3)
 	
 	SetVIDRequest req;
 	req.value(0,10);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	dumpTestData(sendBuffer);
 	
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(test_case_AckResponse_4)
 	
 	SetVIDRequest req;
 	req.value(0,10);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	dumpTestData(sendBuffer);
 	

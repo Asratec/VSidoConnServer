@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(test_case_WriteFlashRequest_0)
 	dumpTestData(expected);
 
 	WriteFlashRequest req;
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	

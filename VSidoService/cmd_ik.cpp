@@ -89,8 +89,8 @@ string IKSetJSONRequest::exec()
 	this->parseKDT(req);
 	if(req)
 	{
-		auto ack = req.exec();
-		return Ack(ack);
+		req.execNA();
+		return Ack();
 	}
 	else
 	{
@@ -264,109 +264,115 @@ string IKGetJSONRequest::exec()
 	this->parseKID(req);
 	if(req)
 	{
-		auto ack = req.exec();
-		if(ack.timeout())
-		{
-			_res["type"] = picojson::value(string("timeout"));
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
-		if(ack)
-		{
-			_res["type"] = picojson::value(string("GetIK"));
-			string raw = static_cast<string>(ack);
-			_res["raw"] = picojson::value(raw);
-			
-			picojson::object ikf;
-			if(ack.position())
+		auto fn = [this](IKResponse &resp) {
+			if(resp.timeout())
 			{
-				ikf["position"] = picojson::value(true);
+				_res["type"] = picojson::value(string("timeout"));
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
 			}
-			else
+			if(resp)
 			{
-				ikf["position"] = picojson::value(false);
-			}
-			if(ack.rotation())
-			{
-				ikf["rotation"] = picojson::value(true);
-			}
-			else
-			{
-				ikf["rotation"] = picojson::value(false);
-			}
-			if(ack.torque())
-			{
-				ikf["torque"] = picojson::value(true);
-			}
-			else
-			{
-				ikf["torque"] = picojson::value(false);
-			}
-			_res["ikflag"] = picojson::value(ikf);
-			
-			picojson::array kdtsArray;
-
-			ack.forEach( [this,&kdtsArray,&ack](unsigned char kid,tuple<signed char,signed char,signed char,signed char,signed char,signed char,signed char,signed char,signed char>kdt){
-				picojson::object ikData;
+				_res["type"] = picojson::value(string("GetIK"));
+				string raw = static_cast<string>(resp);
+				_res["raw"] = picojson::value(raw);
 				
-				string strKid;
-				for(auto pairKid : gConstKidMap)
+				picojson::object ikf;
+				if(resp.position())
 				{
-					if(pairKid.second == kid)
-					{
-						strKid = pairKid.first;
-					}
-				}
-				if(strKid.empty())
-				{
-					ikData["kid"] =  picojson::value(double(kid));
+					ikf["position"] = picojson::value(true);
 				}
 				else
 				{
-					ikData["kid"] =  picojson::value(strKid);
+					ikf["position"] = picojson::value(false);
 				}
-				
-				picojson::object kdtObj;
-				
-				if(ack.position())
+				if(resp.rotation())
 				{
-					picojson::object obj;
-					obj["x"] = picojson::value((double)std::get<0>(kdt));
-					obj["y"] = picojson::value((double)std::get<1>(kdt));
-					obj["z"] = picojson::value((double)std::get<2>(kdt));
-					ikData["position"] = picojson::value(obj);
+					ikf["rotation"] = picojson::value(true);
 				}
-				if(ack.rotation())
+				else
 				{
-					picojson::object obj;
-					obj["x"] = picojson::value((double)std::get<3>(kdt));
-					obj["y"] = picojson::value((double)std::get<4>(kdt));
-					obj["z"] = picojson::value((double)std::get<5>(kdt));
-					ikData["rotation"] = picojson::value(obj);
+					ikf["rotation"] = picojson::value(false);
 				}
-				if(ack.torque())
+				if(resp.torque())
 				{
-					picojson::object obj;
-					obj["x"] = picojson::value((double)std::get<6>(kdt));
-					obj["y"] = picojson::value((double)std::get<7>(kdt));
-					obj["z"] = picojson::value((double)std::get<8>(kdt));
-					ikData["torque"] = picojson::value(obj);
+					ikf["torque"] = picojson::value(true);
 				}
+				else
+				{
+					ikf["torque"] = picojson::value(false);
+				}
+				_res["ikflag"] = picojson::value(ikf);
 				
-				kdtsArray.push_back(picojson::value(ikData));
+				picojson::array kdtsArray;
+
+				resp.forEach( [this,&kdtsArray,&resp](unsigned char kid,tuple<signed char,signed char,signed char,signed char,signed char,signed char,signed char,signed char,signed char>kdt){
+					picojson::object ikData;
+					
+					string strKid;
+					for(auto pairKid : gConstKidMap)
+					{
+						if(pairKid.second == kid)
+						{
+							strKid = pairKid.first;
+						}
+					}
+					if(strKid.empty())
+					{
+						ikData["kid"] =  picojson::value(double(kid));
+					}
+					else
+					{
+						ikData["kid"] =  picojson::value(strKid);
+					}
+					
+					picojson::object kdtObj;
+					
+					if(resp.position())
+					{
+						picojson::object obj;
+						obj["x"] = picojson::value((double)std::get<0>(kdt));
+						obj["y"] = picojson::value((double)std::get<1>(kdt));
+						obj["z"] = picojson::value((double)std::get<2>(kdt));
+						ikData["position"] = picojson::value(obj);
+					}
+					if(resp.rotation())
+					{
+						picojson::object obj;
+						obj["x"] = picojson::value((double)std::get<3>(kdt));
+						obj["y"] = picojson::value((double)std::get<4>(kdt));
+						obj["z"] = picojson::value((double)std::get<5>(kdt));
+						ikData["rotation"] = picojson::value(obj);
+					}
+					if(resp.torque())
+					{
+						picojson::object obj;
+						obj["x"] = picojson::value((double)std::get<6>(kdt));
+						obj["y"] = picojson::value((double)std::get<7>(kdt));
+						obj["z"] = picojson::value((double)std::get<8>(kdt));
+						ikData["torque"] = picojson::value(obj);
+					}
+					
+					kdtsArray.push_back(picojson::value(ikData));
+				}
+				);
+				_res["kdt"] = picojson::value(kdtsArray);
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
 			}
-			);
-			_res["kdt"] = picojson::value(kdtsArray);
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
-		else
-		{
-			_res["type"] = picojson::value(string("error"));
-			_res["detail"] = picojson::value(string(""));
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
+			else
+			{
+				_res["type"] = picojson::value(string("error"));
+				_res["detail"] = picojson::value(string(""));
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+		};
+		uid_ = req.exec(fn);
+		return "";
 	}
 	else
 	{
@@ -522,8 +528,8 @@ string IKJSONRequest::exec()
 		this->parseKDT(req);
 		if(req)
 		{
-			auto ack = req.exec();
-			return Ack(ack);
+			req.execNA();
+			return Ack();
 		}
 		else
 		{
@@ -548,8 +554,12 @@ string IKJSONRequest::exec()
 		this->parseKID(req);
 		if(req)
 		{
-			auto ack = req.exec();
-			return ack.JSON();
+			auto fn = [this](IKResponse &resp) {
+				Dispatcher::onResponse(uid_,"{}");
+				return ;
+			};
+			uid_ = req.exec(fn);
+			return "";
 		}
 		else
 		{

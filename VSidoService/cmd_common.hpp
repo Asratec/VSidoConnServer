@@ -36,6 +36,9 @@ using namespace std;
 
 #include "picojson.h"
 
+#include "VSido.hpp"
+#include "dispatch.hpp"
+
 namespace VSido
 {
 
@@ -57,6 +60,12 @@ public:
 	* @param None
 	*/
 	virtual ~JSONRequest(){};
+
+	/** 非同期返事のIDを取得する
+	* @return ID
+	*/
+	int uid(void){return uid_;};
+	
 protected:
 	/** コンストラクタ
 	* @param None
@@ -68,8 +77,14 @@ protected:
 	* @return 返事のJSON文字列
 	*/
     string Ack(AckResponse &ack);
+
+	/** 実際のACK返事のなしの場合を実行する。
+	* @return 返事のJSON文字列
+	*/
+    string Ack();
 protected:
     picojson::object _res;
+	int uid_ = 0;
 };
 } // namespace VSido
 

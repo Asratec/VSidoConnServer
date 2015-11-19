@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(test_case_VoltageResponse_0)
 	DUMMY_ACK(recieved);
 
 	VoltageRequest req;
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 
 	DUMP_VAR(ack.volt());

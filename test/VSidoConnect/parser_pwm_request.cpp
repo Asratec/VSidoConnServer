@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(test_case_PWMRequest_0)
 	PWMRequest req;
 	req.pluse(6,3200);
 	req.pluse(7,16381);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	

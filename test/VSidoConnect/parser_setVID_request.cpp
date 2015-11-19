@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(test_case_SetVIDRequest_0)
 
 	SetVIDRequest req;
 	req.value(0,2);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(test_case_SetVIDRequest_1)
 
 	SetVIDRequest req;
 	req.value2B(6,2334);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(test_case_SetVIDRequest_2)
 
 
 	
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE(test_case_SetVIDRequest_3)
 
 	SetVIDRequest req;
 	req.value(40,2);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	

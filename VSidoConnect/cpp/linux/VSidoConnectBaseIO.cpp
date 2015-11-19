@@ -117,39 +117,14 @@ void IOSendUart(list<unsigned char> data)
 	}
 }
 
-
-map<int,tuple<list<unsigned char>,chrono::milliseconds>> IOReadUart()
+void IOSetRecieveCallback(function<void(list<unsigned char>)> fn)
 {
 	if(nullptr != uartRead_)
 	{
-		return uartRead_->getCandidate();
-	}
-	return {{}};
-}
-
-/** 非関心のコマンドを戻す。 
-* @param i 番号
-* @return None
-*/
-void IODeleteUartAck(int i)
-{
-	if(nullptr != uartRead_)
-	{
-		return uartRead_->deleteCandidate(i);
+		uartRead_->callback(fn);
 	}
 }
 
-
-/** 新規コマンド発行したことを受信スレッドに通知する
-* @return None
-*/
-void IONotifyNewUart(void)
-{
-	if(nullptr != uartRead_)
-	{
-		return uartRead_->notifyNewCommand();
-	}
-}
 
 
 static string exec(string cmd)
@@ -385,10 +360,12 @@ void fillSystemInformation(void)
     if("edison\n"== uname)
     {
         gSysInfo.edison =true;
+    	gSysInfo.name = "edison";
     }
     else if("raspberrypi\n"== uname)
     {
         gSysInfo.rasp =true;
+    	gSysInfo.name = "rasp";
     }
     else
     {

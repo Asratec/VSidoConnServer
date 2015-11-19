@@ -83,6 +83,15 @@ void RSResponse::ackTimeout(void)
 	string timeout("{\"type\":\"timeout\"}\n");
 	this->ack(timeout);
 }
+/** Miss エラーを返事する
+* @return None
+*/
+void RSResponse::ackMiss(void)
+{
+	string miss("{\"type\":\"error\",\"detail\":\"miss\"}\n");
+	this->ack(miss);
+}
+
 
 /** 返事する
 * @return None

@@ -39,7 +39,7 @@ using namespace VSido;
 
 
 
-#define DATA(x,y,z) (x+100),(y+100),(z+100)
+#define DATA(x,y,z) (x),(y),(z)
 
 BOOST_AUTO_TEST_CASE(test_case_IKSetRequest_0)
 {
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(test_case_IKSetRequest_0)
 	req.rotation(1,17,52,34);
 	req.torque(1,26,58,44);
 	
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(test_case_IKSetRequest_1)
 	req.position(1,77,23,30);
 	req.torque(1,26,58,44);
 	
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(test_case_IKSetRequest_2)
 	req.rotation(1,17,52,34);
 	req.position(1,77,23,30);
 	
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE(test_case_IKSetRequest_3)
 	req.position(1,0,0,-101);
 	req.position(1,0,0,101);
 	
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(test_case_IKReadRequest_0)
 	req.kid(1);
 	req.kid(2);
 	
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	

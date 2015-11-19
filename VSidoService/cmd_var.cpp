@@ -167,8 +167,8 @@ string VarSetJSONRequest::exec()
 	}
 	if(req)
 	{
-		auto ack = req.exec();
-		return Ack(ack);
+		req.execNA();
+		return Ack();
 	}
 	else
 	{
@@ -270,39 +270,45 @@ string VarGetJSONRequest::exec()
 	}
 	if(req)
 	{
-		auto ack = req.exec();
-		if(ack.timeout())
-		{
-			picojson::value resValue(_res);
-			_res["type"] = picojson::value(string("timeout"));
-			return resValue.serialize();
-		}
-		if(ack)
-		{
-			_res["type"] = picojson::value(string("GetVIDValue"));
-			string raw = static_cast<string>(ack);
-			_res["raw"] = picojson::value(raw);
-			picojson::object vars;
-			ack.forEachVar( [this,&vars](const string &name,int value){
-				if("IO_PA_PWM_CYCLE" == name)
-				{
-					// 4 us.
-					value *= 4;
-				}
-				vars[name] =  picojson::value(double(value));
+		auto fn = [this](GetVIDResponse &resp){
+			if(resp.timeout())
+			{
+				picojson::value resValue(_res);
+				_res["type"] = picojson::value(string("timeout"));
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
 			}
-			);
-			_res["vid"] = picojson::value(vars);
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
-		else
-		{
-			picojson::value resValue(_res);
-			_res["type"] = picojson::value(string("error"));
-			_res["detail"] = picojson::value(string(""));
-			return resValue.serialize();
-		}
+			if(resp)
+			{
+				_res["type"] = picojson::value(string("GetVIDValue"));
+				string raw = static_cast<string>(resp);
+				_res["raw"] = picojson::value(raw);
+				picojson::object vars;
+				resp.forEachVar( [this,&vars](const string &name,int value){
+					if("IO_PA_PWM_CYCLE" == name)
+					{
+						// 4 us.
+						value *= 4;
+					}
+					vars[name] =  picojson::value(double(value));
+				}
+				);
+				_res["vid"] = picojson::value(vars);
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+			else
+			{
+				picojson::value resValue(_res);
+				_res["type"] = picojson::value(string("error"));
+				_res["detail"] = picojson::value(string(""));
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+		};
+		uid_ = req.exec(fn);
+		return "";
 	}
 	else
 	{

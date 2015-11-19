@@ -56,31 +56,37 @@ string AccelerationJSONRequest::exec()
 	AccelerationRequest req;
 	if(req)
 	{
-		auto ack = req.exec();
-		if(ack.timeout())
-		{
-			_res["type"] = picojson::value(string("timeout"));
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
-		if(ack)
-		{
-			_res["type"] = picojson::value(string("GetAcceleration"));
-			string raw = static_cast<string>(ack);
-			_res["raw"] = picojson::value(raw);
-			_res["ax"] = picojson::value(ack.x());
-			_res["ay"] = picojson::value(ack.y());
-			_res["az"] = picojson::value(ack.z());
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
-		else
-		{
-			_res["type"] = picojson::value(string("error"));
-			_res["detail"] = picojson::value(string(""));
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
+		auto fn = [this](AccelerationResponse &resp){
+			if(resp.timeout())
+			{
+				_res["type"] = picojson::value(string("timeout"));
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+			if(resp)
+			{
+				_res["type"] = picojson::value(string("GetAcceleration"));
+				string raw = static_cast<string>(resp);
+				_res["raw"] = picojson::value(raw);
+				_res["ax"] = picojson::value(resp.x());
+				_res["ay"] = picojson::value(resp.y());
+				_res["az"] = picojson::value(resp.z());
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+			else
+			{
+				_res["type"] = picojson::value(string("error"));
+				_res["detail"] = picojson::value(string(""));
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+		};
+		uid_ = req.exec(fn);
+		return "";
 	}
 	else
 	{

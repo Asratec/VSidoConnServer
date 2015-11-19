@@ -331,7 +331,7 @@ void Motion::loopMotion(double tic)
 		{
 			if(*req)
 			{
-				req->exec();
+				req->execNA();
 			}
 			shared_ptr <AngleRequest> reqNew(new AngleRequest);
 			req = reqNew;
@@ -342,7 +342,7 @@ void Motion::loopMotion(double tic)
 	{
 		if(*req)
 		{
-			req->exec();
+			req->execNA();
 		}
 	}
 }

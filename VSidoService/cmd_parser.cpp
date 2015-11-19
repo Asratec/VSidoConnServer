@@ -79,7 +79,7 @@ JSONRequestParser::JSONRequestParser(const string &json)
 		}
 		DUMP_VAR(_raw);
 		auto ser = _raw.serialize();
-		FATAL_VAR(ser);
+		DUMP_VAR(ser);
 	}
 	catch(const std::runtime_error &e)
 	{

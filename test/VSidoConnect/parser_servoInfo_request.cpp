@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(test_case_ServoInfoRequest_0)
 
 	ServoInfoRequest req;
 	req.info(2,0,53);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(test_case_ServoInfoRequest_1)
 	ServoInfoRequest req;
 	req.info(2,1,2);
 	req.info(2,0,53);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(test_case_ServoInfoRequest_2)
 	ServoInfoRequest req;
 	req.info(0,0,53);
 	req.info(255,0,53);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(test_case_ServoInfoRequest_3)
 
 	ServoInfoRequest req;
 	req.info(2,53,1);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(test_case_ServoInfoRequest_5)
 
 	ServoInfoRequest req;
 	req.info(2,0,54);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE(test_case_ServoInfoRequest_6)
 	ServoInfoRequest req;
 	req.info(2,1,0);
 	req.info(2,1,55);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	

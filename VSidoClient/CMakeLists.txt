@@ -25,3 +25,31 @@
 #CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 #OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+install(FILES 
+	javascript/vsido.client.api.js 
+	DESTINATION share/WebServer/sample/js/ 
+)
+install(FILES 
+	javascript/vsido.client.api.js 
+	DESTINATION share/debug/js/ 
+)
+install(FILES 
+	javascript/vsido.client.api.js 
+	DESTINATION share/WebServerGame/game/js/ 
+)
+
+install(FILES 
+	javascript.Server.Config/vsido.client.config.js 
+	DESTINATION share/WebServer/sample/js/ 
+)
+install(FILES 
+	javascript.Server.Config/vsido.client.config.js 
+	DESTINATION share/debug/js/ 
+)
+install(FILES 
+	javascript.Server.Config/vsido.client.config.js 
+	DESTINATION share/WebServerGame/game/js/ 
+)
+
+
+

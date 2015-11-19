@@ -59,6 +59,7 @@ public:
 	* @return 返事のJSON文字列
 	*/
     virtual string exec();
+
 private:
     PingJSONRequest(void);
 private:

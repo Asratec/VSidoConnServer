@@ -98,6 +98,7 @@ void UARTSend::write(const list<unsigned char> &data)
 	gettimeofday(&pred_tv,NULL);
 	auto preMiliSec = pred_tv.tv_sec *1000 + pred_tv.tv_usec /1000;
 
+	DUMP_SPEED_CHECK("writes start");
 	auto tcret = tcflush(_fd,TCIOFLUSH);
 	if (0 > tcret) 
 	{
@@ -153,6 +154,7 @@ void UARTSend::write(const list<unsigned char> &data)
 	auto uartWriteTime = globalSendUartTime -  preMiliSec;
 	
 	DUMP_VAR(uartWriteTime);
+	DUMP_SPEED_CHECK("writes end");
 
 }
 

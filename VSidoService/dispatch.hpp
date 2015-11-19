@@ -65,10 +65,16 @@ public:
 	*/
 	void addRequest(const string req,shared_ptr<RSResponse> res);
 
+	/** 返事
+	* @return None
+	*/
+	static void onResponse(int id ,const string & msg);
+
 	/** 分配スレッド本体
 	* @return None
 	*/
     void operator()();
+
 	
 private:
 	

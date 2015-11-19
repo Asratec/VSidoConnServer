@@ -37,6 +37,8 @@ using namespace VSido;
 #include <mutex>              // std::mutex, std::unique_lock
 #include <condition_variable> // std::condition_variable
 #include <thread>
+#include <tuple>
+#include <atomic>
 using namespace std;
 
 
@@ -52,15 +54,23 @@ static condition_variable reqCv;
 
 static mutex dataMtx;
 
+
+
 static long long globalSendTime = 0;
 
 /// mili sec
 static const int iConstVSidoCommTimeout = 100;
 
-static const int iConstRequestWaitTimeout = 10;
+static const int iConstRequestWaitTimeout = 1;
+
+
+static const int iConstBufferCommandCounter = 2;
 
 static list<tuple<string,shared_ptr<WSResponse>>> uniq_wsReq;
 static list<tuple<string,shared_ptr<RSResponse>>> uniq_rsReq;
+
+
+
 
 /** コンストラクタ
 * @param send VSidoと繋がるURATの送信
@@ -140,6 +150,7 @@ void Dispatcher::addRequest(const string req,shared_ptr<RSResponse> res)
 	DUMP_VAR_DETAILS(req);
 	
 	{
+		lock_guard<mutex> lock(dataMtx);
 		this->_rsReq.push_back(make_tuple(req,res));
 	}
 	DUMP_VAR_DETAILS(req);
@@ -162,7 +173,7 @@ void Dispatcher::operator()()
 		bool wait = false;
 		{
 			lock_guard<mutex> lock(dataMtx);
-			wait =  (true == this->_wsReq.empty()) &&  (true == this->_rsReq.empty());
+			wait =  (this->_wsReq.empty()) &&  (this->_rsReq.empty());
 		}
 		if(wait)
 		{
@@ -180,89 +191,251 @@ void Dispatcher::operator()()
 		trySendWSReq();
 		/// try send tpc socket request.
 		trySendRSReq();
+
 		this_thread::yield();
 	}
 }
 
+static mutex dataResMtx;
+static map<int,shared_ptr<WSResponse> > uniq_nb_ws;
+static map<int,shared_ptr<RSResponse> > uniq_nb_rs;
+
+/// no block request object will be kept until message is recieved.
+static map<int,shared_ptr<JSONRequest> > uniq_nb_JSONReq;
+
+static atomic<int> gLastRequestUID(0);
+
+
 void Dispatcher::trySendWSReq(void)
 {
 	tuple<string,shared_ptr<WSResponse>> req;
-	bool empty = true;
 
 	{
 		lock_guard<mutex> lock(dataMtx);
 		if(false == this->_wsReq.empty())
 		{
 			req = this->_wsReq.back();
-			empty = false;
-		}
-	}
-	if(false == empty)
-	{
-		JSONRequestParser parser(std::get<0>(req));
-		DUMP_VAR_DETAILS(&parser);
-		auto errMsg = parser.errorMsg();
-		if(errMsg.empty())
-		{
-			auto request = parser.create();
-			auto result = request->exec();
-			auto wsRes = std::get<1>(req);
-			wsRes->ack(result);
 		}
 		else
 		{
-			picojson::object _res;
-			picojson::value resValue(_res);
-			_res["type"] = picojson::value(string("error"));
-			_res["detail"] = picojson::value(errMsg);
-			auto rsRes = std::get<1>(req);
-			rsRes->ack(resValue.serialize());
+			return;
 		}
 	}
+	JSONRequestParser parser(std::get<0>(req));
+	DUMP_VAR_DETAILS(&parser);
+	auto errMsg = parser.errorMsg();
+	if(errMsg.empty())
 	{
+		auto request = parser.create();
+		auto result = request->exec();
+		auto wsRes = std::get<1>(req);
+		if(result.empty())
+		{
+			/// noblock message.
+			lock_guard<mutex> lock(dataResMtx);
+			auto itHolder = uniq_nb_ws.find(request->uid());
+			// send timeout to old one
+			if(itHolder != uniq_nb_ws.end())
+			{
+				itHolder->second->ackMiss();
+			}
+			// add new one.
+			uniq_nb_ws[request->uid()] = wsRes;
+			uniq_nb_JSONReq[request->uid()] = request;
+			gLastRequestUID = request->uid();
+		}
+		else
+		{
+			wsRes->ack(result);
+		}
+	}
+	else
+	{
+		picojson::object _res;
+		picojson::value resValue(_res);
+		_res["type"] = picojson::value(string("error"));
+		_res["detail"] = picojson::value(errMsg);
+		auto rsRes = std::get<1>(req);
+		rsRes->ack(resValue.serialize());
+	}
+	// clear up
+	{
+		// last one is sent,so pop it.
 		lock_guard<mutex> lock(dataMtx);
-		this->_wsReq.clear();
+		this->_wsReq.pop_back();
+		// if there are more buffered than iConstBufferCommandCounter
+		// sent busy and pop,from front side.
+		while( iConstBufferCommandCounter < this->_wsReq.size())
+		{
+			auto rsRes = std::get<1>(this->_wsReq.front());
+			rsRes->ackBusy();
+			this->_wsReq.pop_front();
+		}
 	}
 }
 void Dispatcher::trySendRSReq(void)
 {
 	tuple<string,shared_ptr<RSResponse>> req;
-	bool empty = true;
 
 	{
 		lock_guard<mutex> lock(dataMtx);
 		if(false == this->_rsReq.empty())
 		{
 			req = this->_rsReq.back();
-			empty = false;
-		}
-	}
-	if(false == empty)
-	{
-		JSONRequestParser parser(std::get<0>(req));
-		DUMP_VAR_DETAILS(&parser);
-		auto errMsg = parser.errorMsg();
-		if(errMsg.empty())
-		{
-			auto request = parser.create();
-			auto result = request->exec();
-			auto rsRes = std::get<1>(req);
-			rsRes->ack(result);
 		}
 		else
 		{
-			picojson::object _res;
-			picojson::value resValue(_res);
-			_res["type"] = picojson::value(string("error"));
-			_res["detail"] = picojson::value(errMsg);
-			auto rsRes = std::get<1>(req);
-			rsRes->ack(resValue.serialize());
-			
+			return;
 		}
 	}
+	JSONRequestParser parser(std::get<0>(req));
+	DUMP_VAR_DETAILS(&parser);
+	auto errMsg = parser.errorMsg();
+	if(errMsg.empty())
 	{
+		auto request = parser.create();
+		auto result = request->exec();
+		auto rsRes = std::get<1>(req);
+		if(result.empty())
+		{
+			/// noblock message.
+			lock_guard<mutex> lock(dataResMtx);
+			auto itHolder = uniq_nb_rs.find(request->uid());
+			// send timeout to old one
+			if(itHolder != uniq_nb_rs.end())
+			{
+				itHolder->second->ackMiss();
+			}
+			// add new one.
+			uniq_nb_rs[request->uid()] = rsRes;
+			uniq_nb_JSONReq[request->uid()] = request;
+			gLastRequestUID = request->uid();
+		}
+		else
+		{
+			rsRes->ack(result);
+		}
+	}
+	else
+	{
+		picojson::object _res;
+		picojson::value resValue(_res);
+		_res["type"] = picojson::value(string("error"));
+		_res["detail"] = picojson::value(errMsg);
+		auto rsRes = std::get<1>(req);
+		rsRes->ack(resValue.serialize());
+		
+	}
+	// clear up
+	{
+		// last one is sent,so pop it.
 		lock_guard<mutex> lock(dataMtx);
-		this->_rsReq.clear();
+		this->_rsReq.pop_back();
+		// if there are more buffered than iConstBufferCommandCounter
+		// sent busy and pop,from front side.
+		while( iConstBufferCommandCounter < this->_rsReq.size())
+		{
+			auto rsRes = std::get<1>(this->_rsReq.front());
+			rsRes->ackBusy();
+			this->_rsReq.pop_front();
+		}
 	}
 }
+
+void Dispatcher::onResponse(int id ,const string & msg)
+{
+	auto it = uniq_nb_ws.find(id);
+	if(uniq_nb_ws.end() != it)
+	{
+		auto res = it->second;
+		res->ack(msg);
+		// 正常に返事したものをキューから削除する
+		uniq_nb_ws.erase(it);
+		
+		// 返事していないゴミを削除する
+		// 先に要求出したが、まだ来ないものについて、エラーを返し。
+		auto tryIt = uniq_nb_ws.begin();
+		while(tryIt != uniq_nb_ws.end())
+		{
+			// 基本が、古い番号から、エラーを返す。
+			// UIDが最大値まだ行ったら、採番が頭に戻るため。
+			// 番号古くでも、若い要求かも。
+			if(id <= gLastRequestUID )
+			{
+				if(tryIt->first < id || tryIt->first > gLastRequestUID)
+				{
+					auto resBad = tryIt->second;
+					res->ackMiss();
+					tryIt = uniq_nb_ws.erase(tryIt);
+				}
+				else
+				{
+					tryIt++;
+				}
+			}
+			else
+			{
+				if(tryIt->first > gLastRequestUID && tryIt->first < id )
+				{
+					auto resBad = tryIt->second;
+					res->ackMiss();
+					tryIt = uniq_nb_ws.erase(tryIt);
+				}
+				else
+				{
+					tryIt++;
+				}
+			}
+		}
+	}
+	auto itRS = uniq_nb_rs.find(id);
+	if(uniq_nb_rs.end() != itRS)
+	{
+		auto res = itRS->second;
+		res->ack(msg);
+		// 正常に返事したものをキューから削除する
+		uniq_nb_rs.erase(itRS);
+		// 返事していないゴミを削除する
+		// 先に要求出したが、まだ来ないものについて、エラーを返し。
+		auto tryIt = uniq_nb_rs.begin();
+		while(tryIt != uniq_nb_rs.end())
+		{
+			// 基本が、古い番号から、エラーを返す。
+			// UIDが最大値まだ行ったら、採番が頭に戻るため。
+			// 番号古くでも、若い要求かも。
+			if(id <= gLastRequestUID )
+			{
+				if(tryIt->first < id || tryIt->first > gLastRequestUID)
+				{
+					auto resBad = tryIt->second;
+					res->ackMiss();
+					tryIt = uniq_nb_rs.erase(tryIt);
+				}
+				else
+				{
+					tryIt++;
+				}
+			}
+			else
+			{
+				if(tryIt->first > gLastRequestUID && tryIt->first < id )
+				{
+					auto resBad = tryIt->second;
+					res->ackMiss();
+					tryIt = uniq_nb_rs.erase(tryIt);
+				}
+				else
+				{
+					tryIt++;
+				}
+			}
+		}
+	}
+	auto itReq = uniq_nb_JSONReq.find(id);
+	if(uniq_nb_JSONReq.end() != itReq)
+	{
+		uniq_nb_JSONReq.erase(itReq);
+	}
+}
+
 

@@ -125,50 +125,56 @@ string ServoInfoJSONRequest::exec()
 	}
 	if(req)
 	{
-		auto ack = req.exec();
-		_res["type"] = picojson::value(string("GetServoInfo"));
-		if(ack.timeout())
-		{
-			_res["type"] = picojson::value(string("timeout"));
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
-		if(ack)
-		{
-			string raw = static_cast<string>(ack);
-			_res["raw"] = picojson::value(raw);
-			picojson::array servoArray;
-			ack.forEachServo( [this,&servoArray](unsigned char sid,vector<tuple<string,int>>info){
-				picojson::object servo;
-				servo["sid"] =  picojson::value(double(sid));
-				for(const auto &ir:info)
-				{
-					auto name = std::get<0>(ir);
-					auto value = std::get<1>(ir);
-					auto angleType = std::find(_angleType.begin(), _angleType.end(), name);
-					if(angleType != _angleType.end())
-					{
-						servo[name] =  picojson::value(double(value)/double(10));
-					}
-					else
-					{
-						servo[name] =  picojson::value(double(value));
-					}
-				}
-				servoArray.push_back(picojson::value(servo));
+		auto fn = [this](ServoInfoResponse &resp){
+			_res["type"] = picojson::value(string("GetServoInfo"));
+			if(resp.timeout())
+			{
+				_res["type"] = picojson::value(string("timeout"));
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
 			}
-			);
-			_res["servo"] = picojson::value(servoArray);
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
-		else
-		{
-			_res["type"] = picojson::value(string("error"));
-			_res["detail"] = picojson::value(string(""));
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
+			if(resp)
+			{
+				string raw = static_cast<string>(resp);
+				_res["raw"] = picojson::value(raw);
+				picojson::array servoArray;
+				resp.forEachServo( [this,&servoArray](unsigned char sid,vector<tuple<string,int>>info){
+					picojson::object servo;
+					servo["sid"] =  picojson::value(double(sid));
+					for(const auto &ir:info)
+					{
+						auto name = std::get<0>(ir);
+						auto value = std::get<1>(ir);
+						auto angleType = std::find(_angleType.begin(), _angleType.end(), name);
+						if(angleType != _angleType.end())
+						{
+							servo[name] =  picojson::value(double(value)/double(10));
+						}
+						else
+						{
+							servo[name] =  picojson::value(double(value));
+						}
+					}
+					servoArray.push_back(picojson::value(servo));
+				}
+				);
+				_res["servo"] = picojson::value(servoArray);
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+			else
+			{
+				_res["type"] = picojson::value(string("error"));
+				_res["detail"] = picojson::value(string(""));
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+		};
+		uid_ = req.exec(fn);
+		return "";
 	}
 	else
 	{

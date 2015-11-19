@@ -40,7 +40,7 @@ using namespace VSido;
 
 
 
-#define SHIFT_PERCENTAGE(x) (unsigned char)(x+100)
+#define SHIFT_PERCENTAGE(x) (unsigned char)(x)
 
 BOOST_AUTO_TEST_CASE(test_case_WalkRequest_0)
 {
@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(test_case_WalkRequest_0)
 	WalkRequest req;
 	req.forward(50);
 	req.turn(-50);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	

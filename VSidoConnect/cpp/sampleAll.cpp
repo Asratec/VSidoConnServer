@@ -30,7 +30,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VSido.hpp"
 using namespace VSido;
 #include <iostream>
+#include <atomic>
 using namespace std;
+
 int main()
 {
 	VSido::connect();
@@ -40,33 +42,50 @@ int main()
 		AngleRequest req;
 		req.cycle(10);
 		req.angle(2,100);
-		auto ack = req.exec();
-		cout << ack.msg() << endl;
+		// Not care ack
+		req.execNA();
 	}
 
 	{
 		MinMaxAngleRequest req;
 		req.minMax(2,20,35);
-		auto ack = req.exec();
+		// block exec until Ack is return.
+		auto ack = req.execBK();
 		cout << ack.msg() << endl;
 	}
 	
 	{
 		ComplianceRequest req;
-		req.comp(2,400,-500);
-		auto ack = req.exec();
-		cout << ack.msg() << endl;
+		req.comp(2,20,10);
+		// Not care response
+		req.exec();
 	}
 	
 	{
 		ServoInfoRequest req;
 		req.info(2,9,54);
-		auto ack = req.exec();
+		auto ack = req.execBK();
 		ack.forEachServo([](unsigned char sid,vector<tuple<string,int>> &info){
 			
 		});
 	}
 
+	// get setting with no block (multithread).
+	{
+		ServoInfoRequest req;
+		req.info(2,9,54);
+		atomic<bool> waitMsg(true);
+		auto fn = [&waitMsg](ServoInfoResponse &resp) {
+			resp.forEachServo([](unsigned char sid,vector<tuple<string,int>> &info){
+				
+			});
+			waitMsg = false;
+		};
+		req.exec(fn);
+		// keep object(req) util call back;
+		while(waitMsg){}
+	}
+	
 	
 	VSido::disConnect();
 	return 0;

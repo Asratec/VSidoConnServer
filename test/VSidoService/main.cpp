@@ -36,4 +36,5 @@ using namespace std;
 
 mutex _globalLockMtx;
 
+string forceStrRoot;
 

@@ -8,6 +8,7 @@ LINK_DIRECTORIES(${CMAKE_INSTALL_PREFIX}/lib)
 include_directories(./)
 
 include_directories(${PROJECT_SOURCE_DIR}/VSidoService)
+include_directories(${PROJECT_SOURCE_DIR}/VSidoConnect/cpp)
 
 
 
@@ -27,6 +28,7 @@ add_executable( VSidoService.ut
 target_link_libraries( VSidoService.ut
 	VSido.Service
 	VSidoConnect_s
+	VSidoMotion
 	pthread
 	websockets
 	z

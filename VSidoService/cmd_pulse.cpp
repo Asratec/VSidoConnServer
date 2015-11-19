@@ -67,7 +67,7 @@ string PulseJSONRequest::exec()
 			setVid.value("IO_PA_PWM",1);
 			if(setVid)
 			{
-				setVid.exec();
+				setVid.execNA();
 			}
 		}
 	//	DUMP_VAR(_raw);
@@ -93,7 +93,7 @@ string PulseJSONRequest::exec()
 				uint16_t pwm_cycle = 0;
 				if(varReq)
 				{
-					auto ackVar = varReq.exec();
+					auto ackVar = varReq.execBK();
 					ackVar.forEachVar( [this,&pwm_cycle](const string &name,int value){
 						if("IO_PA_PWM_CYCLE" == name)
 						{
@@ -115,8 +115,8 @@ string PulseJSONRequest::exec()
 	}
 	if(req)
 	{
-		auto ack = req.exec();
-		return Ack(ack);
+		req.execNA();
+		return Ack();
 	}
 	else
 	{

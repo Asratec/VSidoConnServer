@@ -88,10 +88,8 @@ void WSResponse::setDist(struct libwebsocket *wsi)
 */
 void WSResponse::ackBusy(void)
 {
-	string busy("{\"type\":\"busy\"}\n");
-// reply error when socket is busy to receive.
-//	usleep(iConstBusyWait);
-//	this->ack(busy);
+	string busy("{\"type\":\"error\",\"detail\":\"I'm busy\"}\n");
+	this->ack(busy);
 }
 /** Timeoutを返事する
 * @return None
@@ -101,6 +99,16 @@ void WSResponse::ackTimeout(void)
 	string timeout("{\"type\":\"timeout\"}\n");
 	this->ack(timeout);
 }
+
+/** Miss エラーを返事する
+* @return None
+*/
+void WSResponse::ackMiss(void)
+{
+	string miss("{\"type\":\"error\",\"detail\":\"miss\"}\n");
+	this->ack(miss);
+}
+
 
 /** 返事する
 * @return None

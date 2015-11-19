@@ -82,8 +82,8 @@ string ComplianceJSONRequest::exec()
 	}
 	if(req)
 	{
-		auto ack = req.exec();
-		return Ack(ack);
+		req.execNA();
+		return Ack();
 	}
 	else
 	{

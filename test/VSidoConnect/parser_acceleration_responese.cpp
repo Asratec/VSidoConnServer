@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(test_case_AccelerationResponse_0)
 	DUMMY_ACK(recieved);
 
 	AccelerationRequest req;
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 
 	DUMP_VAR(ack.x());
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(test_case_AccelerationResponse_1)
 	DUMMY_ACK(recieved);
 
 	AccelerationRequest req;
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	BOOST_CHECK_EQUAL("" , ack.JSON());
 }

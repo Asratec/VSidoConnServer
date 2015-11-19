@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(test_case_FeedBackResponse_0)
 
 	FeedBackRequest req;
 	req.feedback(0,53);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	dumpTestData(sendBuffer);
 	dumpTestData(recieved);
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(test_case_FeedBackResponse_1)
 
 	FeedBackRequest req;
 	req.feedback(0,53);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	dumpTestData(sendBuffer);
 	dumpTestData(recieved);
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(test_case_FeedBackResponse_2)
 
 	FeedBackRequest req;
 	req.feedback(5,32);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	dumpTestData(sendBuffer);
 	dumpTestData(recieved);
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(test_case_FeedBackResponse_3)
 
 	FeedBackRequest req;
 	req.feedback(5,32);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	BOOST_CHECK_EQUAL("" , ack.JSON());
 	

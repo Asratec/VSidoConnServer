@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "cmd_ping.hpp"
 #include "VSido.hpp"
+#include "dispatch.hpp"
 using namespace VSido;
 #include <string>
 #include <iostream>
@@ -50,6 +51,14 @@ PingJSONRequest::PingJSONRequest(picojson::object &raw)
 }
 
 
+
+/** 返事を通知する。
+* @param res レスポンス
+* @return 返事のJSON文字列
+string PingJSONRequest::onResponse(JointResponse& resp)
+*/
+
+
 /** コマンドを実行する。
 * @param None
 * @return 返事のJSON文字列
@@ -59,42 +68,49 @@ string PingJSONRequest::exec()
 	JointRequest req;
 	if(req)
 	{
-		auto ack = req.exec();
-		if(ack.timeout())
-		{
-			_res["type"] = picojson::value(string("timeout"));
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
-		if(ack)
-		{
-			_res["type"] = picojson::value(string("CheckConnectedServo"));
-			string raw = static_cast<string>(ack);
-			_res["raw"] = picojson::value(raw);
-			picojson::array servoArray;
-			ack.forEach( [this,&servoArray](unsigned char sid,unsigned char tim){
-				picojson::object servo;
-				double timMicroSec = tim * 10;
-				servo["sid"] =  picojson::value(double(sid));
-				servo["tim"] =  picojson::value(double(timMicroSec));
-				servoArray.push_back(picojson::value(servo));
+		auto fn = [this](JointResponse& resp) {
+			if(resp.timeout())
+			{
+				_res["type"] = picojson::value(string("timeout"));
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
 			}
-			);
-			_res["servo"] = picojson::value(servoArray);
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
-		else
-		{
-			_res["type"] = picojson::value(string("error"));
-			_res["detail"] = picojson::value(string(""));
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
+			if(resp)
+			{
+				_res["type"] = picojson::value(string("CheckConnectedServo"));
+				string raw = static_cast<string>(resp);
+				_res["raw"] = picojson::value(raw);
+				picojson::array servoArray;
+				resp.forEach( [this,&servoArray](unsigned char sid,unsigned char tim){
+					picojson::object servo;
+					double timMicroSec = tim * 10;
+					servo["sid"] =  picojson::value(double(sid));
+					servo["tim"] =  picojson::value(double(timMicroSec));
+					servoArray.push_back(picojson::value(servo));
+				}
+				);
+				_res["servo"] = picojson::value(servoArray);
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+			else
+			{
+				_res["type"] = picojson::value(string("error"));
+				_res["detail"] = picojson::value(string(""));
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+		};
+		uid_ = req.exec(fn);
+		return "";
 	}
 	else
 	{
 		return req.msg();
 	}
 }
+
 

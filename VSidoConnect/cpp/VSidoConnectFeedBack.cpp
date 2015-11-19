@@ -118,10 +118,6 @@ void FeedBackRequest::uart()
 
 
 
-
-
-
-
 static FeedBackRequest badFeedBackRequest;
 /** コンストラクタ
 */

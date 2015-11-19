@@ -91,28 +91,34 @@ string RawJSONRequest::exec()
 	}
 	if(req)
 	{
-		auto ack = req.exec();
-		if(ack.timeout())
-		{
-			_res["type"] = picojson::value(string("timeout"));
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
-		if(ack)
-		{
-			_res["type"] = picojson::value(string("Binary"));
-			string raw = static_cast<string>(ack);
-			_res["raw"] = picojson::value(raw);
-			picojson::value val(_res);
-			return val.serialize();
-		}
-		else
-		{
-			_res["type"] = picojson::value(string("error"));
-			_res["detail"] = picojson::value(string(""));
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
+		auto fn = [this](RawResponse& resp){
+			if(resp.timeout())
+			{
+				_res["type"] = picojson::value(string("timeout"));
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+			if(resp)
+			{
+				_res["type"] = picojson::value(string("Binary"));
+				string raw = static_cast<string>(resp);
+				_res["raw"] = picojson::value(raw);
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+			else
+			{
+				_res["type"] = picojson::value(string("error"));
+				_res["detail"] = picojson::value(string(""));
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+		};
+		uid_ = req.exec(fn);
+		return "";
 	}
 	else
 	{

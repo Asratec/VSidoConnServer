@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(test_case_RawResponse_0)
 	DUMMY_ACK(recieved);
 
 	RawRequest req;
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	dumpTestData(recieved);
 	string raw = static_cast<string>(ack);
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(test_case_RawResponse_1)
 	DUMMY_ACK(recieved);
 
 	RawRequest *req = nullptr;
-	req->exec();
+	req->execBK();
 
 	BOOST_CHECK(true);
 	

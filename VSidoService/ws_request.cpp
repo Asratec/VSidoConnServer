@@ -140,7 +140,6 @@ static int callback_vsido_motion(struct libwebsocket_context * ctx,
         }
 		case LWS_CALLBACK_SERVER_WRITEABLE:
 		{
-			printf("LWS_CALLBACK_SERVER_WRITEABLE\n");
 			lock_guard<mutex> lock(mtxWSMotionAck);
 			auto queAck = globalMotionAckList.find(wsi);
 			if(globalMotionAckList.end() == queAck)
@@ -261,6 +260,7 @@ static int callback_vsido_cmd(struct libwebsocket_context * ctx,
     	}
         case LWS_CALLBACK_RECEIVE:
     	{
+    		DUMP_SPEED_CHECK("LWS_CALLBACK_RECEIVE");
         	if(nullptr == wsi)
         	{
         		DUMP_VAR(wsi);
@@ -270,18 +270,19 @@ static int callback_vsido_cmd(struct libwebsocket_context * ctx,
         	try
         	{
 				DUMP_VAR_DETAILS(user);
+        		DUMP_VAR(msgStr);
         		globalRequest->recieve(msgStr,wsi);
         	}
         	catch(...)
         	{
         		printf("LWS_CALLBACK_RECEIVE exception %s:%d\n",__FILE__,__LINE__);
         	}
-			usleep(1000*5);
+			usleep(1000*1);
             break;
         }
 		case LWS_CALLBACK_SERVER_WRITEABLE:
 		{
-			printf("LWS_CALLBACK_SERVER_WRITEABLE\n");
+    		DUMP_SPEED_CHECK("LWS_CALLBACK_SERVER_WRITEABLE");
 			lock_guard<mutex> lock(mtxWSAck);
 			auto queAck = globalAckList.find(wsi);
 			if(globalAckList.end() == queAck)
@@ -301,7 +302,7 @@ static int callback_vsido_cmd(struct libwebsocket_context * ctx,
 				FATAL_VAR(wsi);
 			}
 	        delete []data;
-			usleep(1000*5);
+			usleep(1000*1);
 			libwebsocket_callback_on_writable(ctx,wsi);
 			queAck->second.pop_front();
 			break;
@@ -328,6 +329,16 @@ static int callback_vsido_cmd(struct libwebsocket_context * ctx,
     		}
     		break;
     	}
+        case LWS_CALLBACK_GET_THREAD_ID:
+        {
+#ifdef __APPLE__
+            uint64_t tid;
+            pthread_threadid_np(NULL, &tid);
+            return tid;
+#else
+            return pthread_self();
+#endif
+        }
     	default:
             break;
     }

@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(test_case_JointRequest_0)
 	dumpTestData(expected);
 
 	JointRequest req;
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	

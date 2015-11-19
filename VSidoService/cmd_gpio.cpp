@@ -94,7 +94,7 @@ string GpioJSONRequest::exec()
 	}
 	if(setVid)
 	{
-		setVid.exec();
+		setVid.execNA();
 	}
 	else
 	{
@@ -102,8 +102,8 @@ string GpioJSONRequest::exec()
 	}
 	if(req)
 	{
-		auto ack = req.exec();
-		return Ack(ack);
+		req.execNA();
+		return Ack();
 	}
 	else
 	{

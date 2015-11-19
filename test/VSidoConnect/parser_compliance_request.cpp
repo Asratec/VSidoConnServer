@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(test_case_ComplianceRequest_0)
 
 	ComplianceRequest req;
 	req.comp(2,100,200);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(test_case_ComplianceRequest_1)
 
 	ComplianceRequest req;
 	req.comp(1,100,200);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(test_case_ComplianceRequest_2)
 
 	ComplianceRequest req;
 	req.comp(254,100,200);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(test_case_ComplianceRequest_3)
 	ComplianceRequest req;
 	req.comp(2,1,250);
 	req.comp(3,250,1);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE(test_case_ComplianceRequest_4)
 	req.comp(3,251,250);
 	req.comp(4,250,0);
 	req.comp(5,250,251);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE(test_case_ComplianceRequest_5)
 	ComplianceRequest req;
 	req.comp(0,1,2);
 	req.comp(255,1,2);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	

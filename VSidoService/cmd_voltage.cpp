@@ -59,29 +59,35 @@ string VoltageJSONRequest::exec()
 	VoltageRequest req;
 	if(req)
 	{
-		auto ack = req.exec();
-		if(ack.timeout())
-		{
-			_res["type"] = picojson::value(string("timeout"));
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
-		if(ack)
-		{
-			_res["type"] = picojson::value(string("GetVoltage"));
-			string raw = static_cast<string>(ack);
-			_res["raw"] = picojson::value(raw);
-			_res["volt"] = picojson::value(ack.volt());
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
-		else
-		{
-			_res["type"] = picojson::value(string("error"));
-			_res["detail"] = picojson::value(string(""));
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
+		auto fn = [this] (VoltageResponse &resp){
+			if(resp.timeout())
+			{
+				_res["type"] = picojson::value(string("timeout"));
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+			if(resp)
+			{
+				_res["type"] = picojson::value(string("GetVoltage"));
+				string raw = static_cast<string>(resp);
+				_res["raw"] = picojson::value(raw);
+				_res["volt"] = picojson::value(resp.volt());
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+			else
+			{
+				_res["type"] = picojson::value(string("error"));
+				_res["detail"] = picojson::value(string(""));
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+		};
+		uid_ = req.exec(fn);
+		return "";
 	}
 	else
 	{

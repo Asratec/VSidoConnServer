@@ -111,6 +111,8 @@ void GetVIDRequest::uart()
 }
 
 
+
+
 static GetVIDRequest badGetVIDRequest;
 /** コンストラクタ
 */

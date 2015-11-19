@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(test_case_FeedBackRequest_0)
 
 	FeedBackRequest req;
 	req.feedback(0,53);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	

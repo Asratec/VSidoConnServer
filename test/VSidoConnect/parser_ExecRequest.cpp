@@ -43,7 +43,7 @@ using namespace VSido;
 BOOST_AUTO_TEST_CASE(test_case_ExecRequest_exec_nullptr_0)
 {
 	AccelerationRequest *req = nullptr;
-	auto ack = req->exec();
+	req->execBK();
 	BOOST_CHECK(true);
 }
 
@@ -71,14 +71,14 @@ BOOST_AUTO_TEST_CASE(test_case_ExecRequest_execNA_nullptr_0)
 BOOST_AUTO_TEST_CASE(test_case_ExecRequest_execNA_nullptr_2)
 {
 	AccelerationRequest *req = nullptr;
-	req->execNA();
+	req->exec();
 	BOOST_CHECK(true);
 }
 
 BOOST_AUTO_TEST_CASE(test_case_Request_msg_0)
 {
 	AccelerationRequest req;
-	req.execNA();
+	req.exec();
 	BOOST_CHECK_EQUAL("",req.msg());
 }
 

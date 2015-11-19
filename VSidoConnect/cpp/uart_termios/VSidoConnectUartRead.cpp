@@ -59,11 +59,8 @@ extern long long globalSendUartTime;
 
 
 
-static mutex dataMtx;
 
 
-static condition_variable cvGet;
-static mutex cvMtx;
 
 
 /** コンストラクタ
@@ -75,7 +72,6 @@ UARTRead::UARTRead()
 ,_ack({})
 ,_counter(0)
 ,_length(0)
-,_ready(false)
 {
 }
 
@@ -148,6 +144,7 @@ void UARTRead::put(unsigned char data)
 	DUMP_VAR_READ(data);
     if(_constKST == data)
     {
+       DUMP_SPEED_CHECK("recieve begin msg");
 #ifdef DUMP_UART_IO
        printf("read uart dump begin < \n");
        printf("0x%02x,",data);
@@ -158,7 +155,6 @@ void UARTRead::put(unsigned char data)
 		DUMP_VAR_READ(_length);
 		DUMP_VAR_READ(_counter);
 		DUMP_VAR_READ(_sumValue);
-    	lock_guard<mutex> aLock(dataMtx);
         _ack.push_back(data);
         return;
     }
@@ -168,14 +164,13 @@ void UARTRead::put(unsigned char data)
 	_counter++;
     checkSum(data);
 	int CounterIndex = 0x3;
-	if(Request::uid_)
+	if(Request::useuid_)
 	{
 		CounterIndex = 0x5;
 	}
     if(CounterIndex == _counter)
     {
         _length = data;
-    	lock_guard<mutex> aLock(dataMtx);
         _ack.push_back(data);
 		DUMP_VAR_READ(_length);
 		DUMP_VAR_READ(_counter);
@@ -189,39 +184,21 @@ void UARTRead::put(unsigned char data)
        printf("\n");
        printf("> read uart dump end\n");
 #endif
-    	struct timeval tv;
-		gettimeofday(&tv,NULL);
-		long long now = tv.tv_sec *1000 + tv.tv_usec /1000;
-		long long uartTimeLag = now - globalSendUartTime;
-		DUMP_VAR(uartTimeLag);
-
-    	{
-	    	lock_guard<mutex> aLock(dataMtx);
-	    	_ack.push_back(data);
-    		auto now = chrono::steady_clock ::now().time_since_epoch();
-    		_ready = true;
-    		_acks[_ackIDCounter++] = make_tuple(_ack,chrono::duration_cast<chrono::milliseconds>(now));
-    		FATAL_VAR(_acks.size());
-	    }
-		// try delete olde ones
-		tryClearOld();
-    	
-    	{
-   			unique_lock<std::mutex> lk(cvMtx);
-    		cvGet.notify_all();
-    	}
+    	_ack.push_back(data);
+    	// a whole command is done.
+		DUMP_SPEED_CHECK("recieve whole msg");
+    	DUMP_VAR(typeid(fn_).name());
+    	fn_(_ack);
     	return;
     }
 	DUMP_VAR_READ(_length);
 	DUMP_VAR_READ(_counter);
 	DUMP_VAR_READ(_sumValue);
-	lock_guard<mutex> aLock(dataMtx);
     _ack.push_back(data);
 }
 
 void UARTRead::reset(void)
 {
-    lock_guard<mutex> aLock(dataMtx);
     _ack.clear();
     _sumValue = 0;
     _length = 0;
@@ -229,98 +206,14 @@ void UARTRead::reset(void)
 }
 
 
-/** CONNECTからの返事候補を読む
-* @return 返事データ候補
-*/
-map<int,tuple<list<unsigned char>,chrono::milliseconds>> UARTRead::getCandidate()
-{
-	/// io is not open.
-	if(0 >_fd)
-	{
-		return {{}};
-	}
-	FATAL_VAR(_acks.size());
-	// すでにデータがある。
-	{
-		lock_guard<mutex> aLock(dataMtx);
-		if(false == _acks.empty() && true == _ready)
-		{
-			return _acks;
-		}
-	}
-	FATAL_VAR(_acks.size());
-	// wait ack coming at time out.
-	{
-		unique_lock<std::mutex> lk(cvMtx);
-		if(cv_status::timeout != cvGet.wait_for(lk, std::chrono::milliseconds(200)))
-		{
-		}
-	}
-	
-	FATAL_VAR(_acks.size());
-	{
-		lock_guard<mutex> aLock(dataMtx);
-		if(false == _acks.empty())
-		{
-			return _acks;
-		}
-		else
-		{
-			return {{}};
-		}
-	}
-}
-
-/** CONNECTからの返事候補をを削除する
-* @param i 番号
+/** 受信通知を設定する
+* @param fn 通知関数
 * @return None
 */
-void UARTRead::deleteCandidate(int i)
+void UARTRead::callback(function<void(list<unsigned char>)> fn)
 {
-	{
-		lock_guard<mutex> aLock(dataMtx);
-		auto it = _acks.find(i);
-		if(_acks.end() != it)
-		{
-			_acks.erase(it);
-		}
-	}
+	fn_ = fn;
+    DUMP_VAR(typeid(fn_).name());
 }
-
-void UARTRead::tryClearOld(void)
-{
-	lock_guard<mutex> aLock(dataMtx);
-	
-	chrono::milliseconds currentStamp(0);
-	auto it2 = _acks.rbegin();
-	if(_acks.rend() == it2)
-	{
-		FATAL_VAR(currentStamp.count());
-		return;
-	}
-	else
-	{
-		currentStamp = std::get<1>(it2->second);
-	}
-	FATAL_VAR(currentStamp.count());
-	auto it = _acks.begin();
-	while(it != _acks.end())
-	{
-		chrono::milliseconds interval = currentStamp - std::get<1>(it->second);
-		/// 50ms以上の返事なら、削除する。
-		FATAL_VAR(interval.count());
-		if(50 < interval.count())
-		{
-			it = _acks.erase(it);
-		}
-		else
-		{
-			it++;
-		}
-	}
-}
-
-
-int UARTRead::_ackIDCounter = 0;
 
 

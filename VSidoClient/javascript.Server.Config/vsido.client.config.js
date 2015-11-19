@@ -14,12 +14,12 @@ var vsido = vsido || {
 * <pre><code>
 * var scan =  new vsido.ScanBluetooth();
 * var connect = new vsido.Connect({'ip':'192.168.11.5'});
-* connect.send(scan,function(response){
+* connect.send(scan,function(response) {
 *   console.log(JSON.stringify(response));
 * });
 * </code></pre>
 **/
-vsido.ScanBluetooth = function (){
+vsido.ScanBluetooth = function() {
 	this.cmd='ScanBluetooth';
 };
 
@@ -32,16 +32,16 @@ vsido.ScanBluetooth = function (){
 * <pre><code>
 * var pair =  new vsido.PairBluetooth('08:00:27:d0:61:59');
 * var connect = new vsido.Connect({'ip':'192.168.11.5'});
-* connect.send(pair,function(response){
+* connect.send(pair,function(response) {
 *   console.log(JSON.stringify(response));
 * });
 * </code></pre>
 **/
-vsido.PairBluetooth = function (mac){
+vsido.PairBluetooth = function(mac) {
 	this.cmd='PairBluetooth';
-	if(mac){
+	if (mac) {
 		this.device={'mac':mac};
-	}else{
+	} else {
 		this.device={'mac':''};
 	}
 };
@@ -54,12 +54,12 @@ vsido.PairBluetooth = function (mac){
 * <pre><code>
 * var list =  new vsido.ListSerialPort();
 * var connect = new vsido.Connect({'ip':'192.168.11.5'});
-* connect.send(list,function(response){
+* connect.send(list,function(response) {
 *   console.log(JSON.stringify(response));
 * });
 * </code></pre>
 **/
-vsido.ListSerialPort = function (){
+vsido.ListSerialPort = function() {
 	this.cmd='ListSerialPort';
 };
 
@@ -73,21 +73,21 @@ vsido.ListSerialPort = function (){
 * <pre><code>
 * var select =  new vsido.SelectSerialPort(port,baudrate);
 * var connect = new vsido.Connect({'ip':'192.168.11.5'});
-* connect.send(select,function(response){
+* connect.send(select,function(response) {
 *   console.log(JSON.stringify(response));
 * });
 * </code></pre>
 **/
-vsido.SelectSerialPort = function (port,baudrate){
+vsido.SelectSerialPort = function(port,baudrate) {
 	this.cmd='SelectSerialPort';
-	if(port){
+	if (port) {
 		this.port=port;
-	}else{
+	} else {
 		this.port='';
 	}
-	if(baudrate){
+	if (baudrate) {
 		this.baudrate=baudrate;
-	}else{
+	} else {
 		this.baudrate=115200;
 	}
 };

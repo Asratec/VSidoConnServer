@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(test_case_GetVIDResponse_0)
 
 
 
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	
 	auto vars = ack.vars();
 	DUMP_VAR(vars.size());
@@ -225,7 +225,7 @@ BOOST_AUTO_TEST_CASE(test_case_GetVIDResponse_1)
 
 
 
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	
 	BOOST_CHECK_EQUAL("" ,ack.JSON());
 }
@@ -244,7 +244,7 @@ BOOST_AUTO_TEST_CASE(test_case_GetVIDResponse_2)
 
 	GetVIDRequest req;
 
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	
 	BOOST_CHECK_EQUAL("" ,ack.JSON());
 }
@@ -315,7 +315,7 @@ BOOST_AUTO_TEST_CASE(test_case_GetVIDResponse_3)
 	VID_ADD_DATA_1B(24,UID_Flag,			1,0,1,0);
 
 
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	
 	auto vars = ack.vars();
 	DUMP_VAR(vars.size());
@@ -417,7 +417,7 @@ BOOST_AUTO_TEST_CASE(test_case_GetVIDResponse_4)
 
 
 
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	
 	
 	ack.forEachVar([](const string &name ,int value){
@@ -490,7 +490,7 @@ BOOST_AUTO_TEST_CASE(test_case_GetVIDResponse_5)
 	};
 	DUMMY_ACK(recieved);
 
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	
 	
 	ack.forEachVar([](const string &name ,int value){
@@ -563,7 +563,7 @@ BOOST_AUTO_TEST_CASE(test_case_GetVIDResponse_6)
 	};
 	DUMMY_ACK(recieved);
 
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	
 	
 	ack.forEachVar([](const string &name ,int value){

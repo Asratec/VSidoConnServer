@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(test_case_GetVIDRequest_0)
 
 
 	
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(test_case_GetVIDRequest_1)
 	req.vid(24);
 	req.vid(25);
 
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 }

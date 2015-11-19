@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <list>
 #include <map>
 #include <tuple>
-#include <chrono>
+#include <functional>
 using namespace std;
 
 namespace VSido
@@ -56,23 +56,12 @@ public:
 	* @return None
 	*/
 	void setFD(int fd){_fd = fd;}
-
-	/** 新規コマンド発行したことを受信スレッドに通知する
+	
+	/** 受信通知を設定する
+	* @param fn 通知関数
 	* @return None
 	*/
-	void notifyNewCommand(){_ready = false;}
-	
-	/** CONNECTからの返事候補を読む
-	* @return 返事データ候補
-	*/
-	map<int,tuple<list<unsigned char>,chrono::milliseconds>> getCandidate();
-	
-	
-	/** CONNECTからの返事候補をを削除する
-	* @param i 番号
-	* @return None
-	*/
-	void deleteCandidate(int i);
+	void callback(function<void(list<unsigned char>)> fn);
 
 	/** URATの読み込みスレッド本体
 	* @return None
@@ -83,19 +72,14 @@ private:
     void put(unsigned char data);
     void checkSum(unsigned char data);
     void reset(void);
-    void write(const list<unsigned char> &data);
-	void trySendBuffer(void);
-	void tryClearOld(void);
 private:
     const unsigned char _constKST = 0xff;
     int _fd;
     list<unsigned char> _ack;
-    map<int,tuple<list<unsigned char>,chrono::milliseconds>> _acks;
+	function<void(list<unsigned char>)> fn_;
 	int _counter;
     int _length;
     unsigned char _sumValue;
-	bool _ready;
-    static int _ackIDCounter;
 };
 } // namespace VSido
 

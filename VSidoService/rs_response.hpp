@@ -66,6 +66,11 @@ public:
 	*/
     void ackTimeout(void);
 	
+	/** Miss エラーを返事する
+	* @return None
+	*/
+    void ackMiss(void);
+
 	/** 返事する
 	* @return None
 	*/

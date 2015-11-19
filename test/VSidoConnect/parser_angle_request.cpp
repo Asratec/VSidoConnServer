@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(test_case_AngleRequest_0)
 	AngleRequest req;
 	req.cycle(10);
 	req.angle(2,100.2);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(test_case_AngleRequest_1)
 	AngleRequest req;
 	req.cycle(1);
 	req.angle(2,100.2);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(test_case_AngleRequest_2)
 	AngleRequest req;
 	req.cycle(100);
 	req.angle(2,100.2);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(test_case_AngleRequest_3)
 	AngleRequest req;
 	req.cycle(120);
 	req.cycle(0);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(test_case_AngleRequest_4)
 	AngleRequest req;
 	req.angle(0,100.2);
 	req.angle(255,100.2);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE(test_case_AngleRequest_5)
 	AngleRequest req;
 	req.angle(1,-180.0);
 	req.angle(2,180.0);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -193,7 +193,7 @@ BOOST_AUTO_TEST_CASE(test_case_AngleRequest_6)
 	AngleRequest req;
 	req.angle(1,-180.1);
 	req.angle(2,180.1);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -218,7 +218,7 @@ BOOST_AUTO_TEST_CASE(test_case_AngleRequest_7)
 	AngleRequest req;
 	req.angle(1,0.);
 	req.angle(254,0.);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	

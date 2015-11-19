@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(test_case_RawRequest_0)
 	req.op('x');
 	req.bin(0x23);
 	req.bin({0x40,0x50});
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	

@@ -36,6 +36,9 @@ using namespace VSido;
 
 
 #include <iostream>
+#include <mutex>              // std::mutex, std::unique_lock
+#include <condition_variable> // std::condition_variable
+#include <thread>
 using namespace std;
 
 
@@ -51,109 +54,15 @@ namespace VSido
 * @return None
 */
 void sendUart(list<unsigned char> data);
-/** UARTを受信する。 
-* @return 受信データ
-*/
-map<int,tuple<list<unsigned char>,chrono::milliseconds>> readUart();
-
-/** 関心のコマンドを削除する。 
-* @param i 番号
-* @return None
-*/
-void deleteUartAck(int i);
-
-	
-/** 新規コマンド発行したことを受信スレッドに通知する
-* @return None
-*/
-void notifyNewUart(void);
 
 } // namespace VSido
 
 
-/**
-* 要求コマンドを実行する
-* @return VSido CONNECTから返事クラス
-*/
-template <typename T> T ExecRequest<T>::exec()
-{
-	Request *req = reinterpret_cast<Request*>(this);
-	if(nullptr != req)
-	{
-		req->uart();
-		req->uartCommon();
-		notifyNewUart();
-		sendUart(req->uart_);
-		for(int i = 0;i < 4; i++)
-		{
-			auto resUart = readUart();
-			DUMP_VAR(resUart.size());
-			for(auto &pair:resUart)
-			{
-				DUMP_VAR(std::get<0>(pair.second).size());
-				T resObj(std::get<0>(pair.second),*req);
-				if(resObj)
-				{
-					/// 関心のコマンド
-					DUMP_VAR(&resObj);
-					deleteUartAck(pair.first);
-					return resObj;
-				}
-			}
-		}
-	}
-	else
-	{
-		log_erro_param("wrong class");
-	}
-	T resObj;
-	return resObj;
-}
 
 
-template AckResponse ExecRequest<AckResponse>::exec();
-template ServoInfoResponse ExecRequest<ServoInfoResponse>::exec();
-template FeedBackResponse ExecRequest<FeedBackResponse>::exec();
-template GetVIDResponse ExecRequest<GetVIDResponse>::exec();
-template JointResponse ExecRequest<JointResponse>::exec();
-template IKResponse ExecRequest<IKResponse>::exec();
-template AccelerationResponse ExecRequest<AccelerationResponse>::exec();
-template VoltageResponse ExecRequest<VoltageResponse>::exec();
-template RawResponse ExecRequest<RawResponse>::exec();
 
 
-/**
-* 要求コマンドを実行する(No Ack)
-* @return None
-*/
-template <typename T> void ExecRequest<T>::execNA()
-{
-	Request *req = reinterpret_cast<Request*>(this);
-	if(nullptr != req)
-	{
-		req->uart();
-		req->uartCommon();
-		notifyNewUart();
-		sendUart(req->uart_);
-		auto resUart = readUart();
-		DUMP_VAR(resUart.size());
-	}
-	else
-	{
-		log_erro_param("wrong class");
-	}
-}
 
-
-template void ExecRequest<AckResponse>::execNA();
-template void ExecRequest<ServoInfoResponse>::execNA();
-template void ExecRequest<FeedBackResponse>::execNA();
-template void ExecRequest<GetVIDResponse>::execNA();
-template void ExecRequest<JointResponse>::execNA();
-template void ExecRequest<IKResponse>::execNA();
-template void ExecRequest<AccelerationResponse>::execNA();
-template void ExecRequest<VoltageResponse>::execNA();
-template void ExecRequest<RawResponse>::execNA();
 
 
 /** コンストラクタ
@@ -166,13 +75,13 @@ Request::Request()
 ,sum_(0x0)
 ,good_(true)
 {
-	if(uid_)
+	if(useuid_)
 	{
 		length_ = 0x6;
 	}
 }
 
-unsigned int Request::uidCounter_ = 0;
+unsigned char Request::uidCounter_ = 1;
 
 /** UART共通の部分を生成する
 * @param None
@@ -182,10 +91,16 @@ void Request::uartCommon()
 {
 	uart_.push_front(length_);
 	uart_.push_front(cmd_);
-	if(uid_)
+	if(useuid_)
 	{
-		uart_.push_front(uidCounter_++ % 200 );
-		uart_.push_front(uidCounter_++ % 100 + 0x80 );
+		auto uid2 = (unsigned char)(uidCounter_%16) | 0x80;
+		uart_.push_front(uid2);
+		uid_ = uid2;
+		auto uid1 = (unsigned char)((uidCounter_>>4)%16) | 0x80;
+		uart_.push_front( uid1);
+		uid_ |= (uid1 << 8);
+
+		uidCounter_++;
 	}
 	uart_.push_front(st_);
 	/// do check sum
@@ -194,6 +109,27 @@ void Request::uartCommon()
 		sum_ ^= data;
 	}
 	uart_.push_back(sum_);
+}
+
+
+/**
+* 要求コマンドを実行する
+* @return None
+*/
+void Request::exec()
+{
+	this->uart();
+	this->uartCommon();
+	sendUart(this->uart_);
+}
+
+/**
+* 要求コマンドを実行する(No Ack)
+* @return None
+*/
+void Request::execNA()
+{
+	exec();
 }
 
 
@@ -211,7 +147,7 @@ Response::Response(list<unsigned char> uart,Request &req)
 	DUMP_VAR(uart_.size());
 	DUMP_VAR(raw_.size());
 	int checkSameCounter = 1;
-	if(Request::uid_)
+	if(Request::useuid_)
 	{
 		checkSameCounter = 3;
 	}
@@ -641,6 +577,9 @@ JointResponse::JointResponse()
 	mine_ = false;
 }
 
+
+
+
 /** コンストラクタ
 */
 JointResponse::JointResponse(list<unsigned char> uart,Request &req)
@@ -768,6 +707,8 @@ AccelerationResponse::AccelerationResponse()
 {
 }
 
+
+
 /** コンストラクタ
 */
 AccelerationResponse::AccelerationResponse(list<unsigned char> uart,Request &req)
@@ -857,6 +798,8 @@ VoltageRequest::VoltageRequest()
 {
 	cmd_ = 'v';
 }
+
+
 
 static VoltageRequest badVoltageRequest;
 /** コンストラクタ
@@ -976,10 +919,15 @@ void RawRequest::uartCommon()
 	{
 		uart_.push_front(length_);
 		uart_.push_front(cmd_);
-		if(uid_)
+		if(useuid_)
 		{
-			uart_.push_front(uidCounter_++ % 200 );
-			uart_.push_front(uidCounter_++ % 100 + 0x80 );
+			auto uid2 = (unsigned char)(uidCounter_%16) | 0x80;
+			uart_.push_front(uid2);
+			uid_ = uid2;
+			auto uid1 = (unsigned char)((uidCounter_>>4)%16) | 0x80;
+			uart_.push_front( uid1);
+			uid_ |= (uid1 << 8);
+			uidCounter_++;
 		}
 		uart_.push_front(st_);
 		/// do check sum

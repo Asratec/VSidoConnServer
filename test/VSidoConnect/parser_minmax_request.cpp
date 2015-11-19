@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(test_case_MinMaxAngleRequest_0)
 
 	MinMaxAngleRequest req;
 	req.minMax(2,10.5,169.1);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(test_case_MinMaxAngleRequest_1)
 
 	MinMaxAngleRequest req;
 	req.minMax(2,-180.0,180.0);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(test_case_MinMaxAngleRequest_2)
 
 	MinMaxAngleRequest req;
 	req.minMax(2,180.0,-180.0);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(test_case_MinMaxAngleRequest_3)
 	MinMaxAngleRequest req;
 	req.minMax(1,0,0);
 	req.minMax(254,0,0);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(test_case_MinMaxAngleRequest_4)
 	MinMaxAngleRequest req;
 	req.minMax(0,0,0);
 	req.minMax(255,0,0);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	
@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(test_case_MinMaxAngleRequest_5)
 	req.minMax(1,180.2,0.);
 	req.minMax(1,0.,180.2);
 	req.minMax(1,0.,-180.2);
-	auto ack = req.exec();
+	auto ack = req.execBK();
 	dumpTestData(sendBuffer);
 	BOOST_CHECK(expected == sendBuffer);
 	

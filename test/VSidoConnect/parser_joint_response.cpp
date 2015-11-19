@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(test_case_JointResponse_0)
 	DUMMY_ACK(recieved);
 
 	JointRequest req;
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	dumpTestData(sendBuffer);
 	
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(test_case_JointResponse_1)
 	DUMMY_ACK(recieved);
 
 	JointRequest req;
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	dumpTestData(sendBuffer);
 

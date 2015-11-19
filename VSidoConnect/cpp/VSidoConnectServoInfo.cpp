@@ -117,11 +117,6 @@ void ServoInfoRequest::uart()
 
 
 
-
-
-
-
-
 static ServoInfoRequest badServoInfoRequest;
 /** コンストラクタ
 */

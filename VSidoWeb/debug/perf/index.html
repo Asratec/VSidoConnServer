@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>2015-11-06 1st - js do it</title>
+<link rel="stylesheet" href="/styles/importer.css">
+<link rel="stylesheet" href="/styles/jquery.mobile-1.4.5.min.css">
+</head>
+<body>
+<script type="text/javascript" src="/js/jquery-2.1.1.min.js"></script>
+<script type="text/javascript" src="/js/jquery.mobile-1.4.5.min.js"></script>
+<script type="text/javascript" src="/js/vsido.client.api.js"></script>
+<script type="text/javascript" src="/perf/index.js"></script>
+
+<script type="text/javascript">
+$(function(){
+	var int_command = null;
+	$("#start_walk").click(function() {
+		if (int_command) {
+			clearInterval(int_command);
+			int_command = null;
+		}
+		int_command = setInterval(send_walk_command, parseInt($("#interval").val()));
+	});
+
+	$("#start_angle").click(function() {
+		if (int_command) {
+			clearInterval(int_command);
+			int_command = null;
+		}
+		int_command = setInterval(send_read_angle_command, parseInt($("#interval").val()));
+	});
+
+	$("#start_ik").click(function() {
+		if (int_command) {
+			clearInterval(int_command);
+			int_command = null;
+		}
+		int_command = setInterval(send_read_ik_command, parseInt($("#interval").val()));
+	});
+	
+	$("#stop").click(function() {
+		if (int_command) {
+			clearInterval(int_command);
+			int_command = null;
+		}
+	});
+
+});
+</script>
+
+<p id='helloWorld'></p>
+
+	<div>
+		間隔(ms)<input type="text" id="interval" value="150">
+	</div>
+	<br>
+	<br>
+	<br>
+	<div>
+		<input type="button" id="start_walk" value="歩行/送信テスト開始" />
+	</div>
+	<br>
+	<br>
+	<br>
+	<div>
+		<input type="button" id="start_angle" value="角度取得/送信テスト開始" />
+	</div>
+	<br>
+	<br>
+	<br>
+	<div>
+		<input type="button" id="start_ik" value="IK取得/送信テスト開始" />
+	</div>
+	<br>
+	<br>
+	<br>
+	<div>
+		<input type="button" id="stop" value="送信テスト停止" />
+	</div>
+</body>
+</html>

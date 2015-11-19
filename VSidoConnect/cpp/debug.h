@@ -33,9 +33,31 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>              // std::mutex, std::lock_guard
 using namespace std;
 extern mutex _globalLockMtx;
+#include <unistd.h>
+#include <sys/time.h>
+#include <time.h>
+
 
 #define DUMP_UART_IO
 
+
+#if 1
+#ifdef __APPLE__
+#define DUMP_SPEED_CHECK(msg,...) {\
+	struct timeval   tv_dump;\
+	gettimeofday(&tv_dump,NULL);\
+	printf("Time Stamp :[%0.3f] at %s\n",tv_dump.tv_sec + (double)tv_dump.tv_usec/(double)(1000*1000),msg); \
+}
+#else
+#define DUMP_SPEED_CHECK(msg,...) {\
+	struct timespec  tv_dump;\
+	clock_gettime(CLOCK_MONOTONIC,&tv_dump);\
+	printf("Time Stamp :[%0.3f] at %s\n", tv_dump.tv_sec + (double)tv_dump.tv_nsec/(double)(1000*1000*1000),msg); \
+}
+#endif // __APPLE__
+#else
+#define DUMP_SPEED_CHECK(...)
+#endif
 
 //#define DUMP_CMD_BINARY
 

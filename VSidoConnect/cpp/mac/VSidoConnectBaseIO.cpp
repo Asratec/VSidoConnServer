@@ -73,7 +73,6 @@ VSido::SystemInfo VSido::gSysInfo;
 void fillSystemInformation(void);
 
 
-
 void IOConnect(const string &device,int baudrate) throw(string)
 {
     fillSystemInformation();
@@ -115,39 +114,14 @@ void IOSendUart(list<unsigned char> data)
 	}
 }
 
-
-map<int,tuple<list<unsigned char>,chrono::milliseconds>> IOReadUart()
+void IOSetRecieveCallback(function<void(list<unsigned char>)> fn)
 {
 	if(nullptr != uartRead_)
 	{
-		return uartRead_->getCandidate();
-	}
-	return {{}};
-}
-
-/** 非関心のコマンドを戻す。 
-* @param i 番号
-* @return None
-*/
-void IODeleteUartAck(int i)
-{
-	if(nullptr != uartRead_)
-	{
-		return uartRead_->deleteCandidate(i);
+		uartRead_->callback(fn);
 	}
 }
 
-
-/** 新規コマンド発行したことを受信スレッドに通知する
-* @return None
-*/
-void IONotifyNewUart(void)
-{
-	if(nullptr != uartRead_)
-	{
-		return uartRead_->notifyNewCommand();
-	}
-}
 
 
 static string exec(string cmd)
@@ -319,7 +293,7 @@ static map<string,int> baudrateTable =
      BAURATE(3000000),
      BAURATE(3500000),
      BAURATE(4000000)
-     */
+    */
 };
 
 void readConfig(string &port ,int &baudrate)
@@ -361,5 +335,6 @@ void readConfig(string &port ,int &baudrate)
 void fillSystemInformation(void)
 {
     gSysInfo.osx =true;
+    gSysInfo.name = "osx";
 }
 

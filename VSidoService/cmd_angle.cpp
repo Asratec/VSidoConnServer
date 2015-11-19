@@ -42,9 +42,9 @@ using namespace std;
 * @param[in] raw httpサーバーからのJson要求
 *  {
 *    "cmd": "servoAngle",
-*    "cycle": 1~100,
+*    "cycle": 10~1000,
 *    "servo":[
-*      {"sid":1~127,"angle":-1440~1440}
+*      {"sid":1~254,"angle":-180.0~180.0}
 *    ]
 *  }
 */
@@ -86,8 +86,8 @@ string AngleJSONRequest::exec()
 	}
 	if(req)
 	{
-		auto ack = req.exec();
-		return Ack(ack);
+		req.execNA();
+		return Ack();
 	}
 	else
 	{
@@ -135,41 +135,47 @@ string AngleGetJSONRequest::exec()
 	}
 	if(req)
 	{
-		auto ack = req.exec();
-		if(ack.timeout())
-		{
-			_res["type"] = picojson::value(string("timeout"));
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
-		if(ack)
-		{
-			_res["type"] = picojson::value(string("GetServoAngle"));
-			string raw = static_cast<string>(ack);
-			_res["raw"] = picojson::value(raw);
-			picojson::array servoArray;
-			ack.forEachItem( [&servoArray](unsigned char sid,string name,int value){
-				if("ram_pres_pos" == name)
-				{
-					picojson::object servo;
-					servo["sid"] =  picojson::value(double(sid));
-					servo["angle"] =  picojson::value(double(value)/double(10));
-					servoArray.push_back(picojson::value(servo));
-				}
+		auto fn = [this](ServoInfoResponse & resp){
+			if(resp.timeout())
+			{
+				_res["type"] = picojson::value(string("timeout"));
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
 			}
-			);
-			_res["servo"] = picojson::value(servoArray);
-			picojson::value resValue(_res);
-            DUMP_VAR(resValue.serialize());
-			return resValue.serialize();
-		}
-		else
-		{
-			_res["type"] = picojson::value(string("error"));
-			_res["detail"] = picojson::value(string(""));
-			picojson::value resValue(_res);
-			return resValue.serialize();
-		}
+			if(resp)
+			{
+				_res["type"] = picojson::value(string("GetServoAngle"));
+				string raw = static_cast<string>(resp);
+				_res["raw"] = picojson::value(raw);
+				picojson::array servoArray;
+				resp.forEachItem( [&servoArray](unsigned char sid,string name,int value){
+					if("ram_pres_pos" == name)
+					{
+						picojson::object servo;
+						servo["sid"] =  picojson::value(double(sid));
+						servo["angle"] =  picojson::value(double(value)/double(10));
+						servoArray.push_back(picojson::value(servo));
+					}
+				}
+				);
+				_res["servo"] = picojson::value(servoArray);
+				picojson::value resValue(_res);
+	            DUMP_VAR(resValue.serialize());
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+			else
+			{
+				_res["type"] = picojson::value(string("error"));
+				_res["detail"] = picojson::value(string(""));
+				picojson::value resValue(_res);
+				Dispatcher::onResponse(uid_,resValue.serialize());
+				return ;
+			}
+		};
+		uid_ = req.exec(fn);
+		return "";
 	}
 	else
 	{
@@ -222,8 +228,8 @@ string MinMaxAngleJSONRequest::exec()
 	}
 	if(req)
 	{
-		auto ack = req.exec();
-		return Ack(ack);
+		req.execNA();
+		return Ack();
 	}
 	else
 	{

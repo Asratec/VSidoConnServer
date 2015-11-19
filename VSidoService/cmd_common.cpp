@@ -87,3 +87,13 @@ string JSONRequest::Ack(AckResponse &ack)
 	}
 }
 
+/** 実際のACK返事のなしの場合を実行する。
+* @return 返事のJSON文字列
+*/
+string JSONRequest::Ack()
+{
+	_res["type"] = picojson::value(string("accepted"));
+	picojson::value val(_res);
+	return val.serialize();
+}
+

@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <map>
 #include <tuple>
 #include <memory>
+#include <functional>
 using namespace std;
 
 /**
@@ -74,20 +75,14 @@ namespace VSido
 	/**
 	* VSido CONNECTへ要求コマンド実行
 	*/
-	template <typename T> class ExecRequest
+	template <typename T1,typename T2> class ExecRequest
 	{
 	public:
 		/**
-		* 要求コマンドを実行する
+		* 要求コマンドを実行する(block)
 		* @return VSido CONNECTから返事クラス
 		*/
-		T exec();
-
-		/**
-		* 要求コマンドを実行する(No Ack)
-		* @return None
-		*/
-		void execNA();
+		T2 execBK();
 	protected:
 	};
 	
@@ -97,22 +92,34 @@ namespace VSido
 	class Request
 	{
 	public:
-		template <typename T> friend class ExecRequest;
+		template <typename T1,typename T2> friend class ExecRequest;
 
+		/** コンストラクタ
+		*/
+		Request();
+		
 		/** コマンドが正しいか調べる
 		* @return true 正しい、false 正しくない。
 		*/
 		operator bool (){return good_;}
 
+		/**
+		* 要求コマンドを実行する
+		* @return None
+		*/
+		void exec();
+
 		/** コマンドが正しくない場合、ヒント情報を取得する
 		* @return 文字列
 		*/
 		string msg(){return msg_;}
-	protected:
-		/** コンストラクタ
-		*/
-		Request();
 
+		/**
+		* ユーザーIDを取得する
+		* @return None
+		*/
+		int uid(){return uid_;};
+	protected:
 		/** UARTコマンドに変更する。
 		* @return None
 		*/
@@ -124,6 +131,22 @@ namespace VSido
 		virtual void uartCommon();
 
 		friend class Response;
+	protected:
+
+		/**
+		* 要求コマンドを実行する(No Ack) 
+		* Ack返すコマンドのみ有効
+		* @return None
+		*/
+		virtual void execNA();
+
+		/**
+		* 要求コマンドを実行する(No block)
+		* Ack返すコマンドのみ有効
+		* @param fptr 関数
+		* @return id
+		*/
+		int exec(function<void(AckResponse&)> fptr);
 	private:
 		
 	protected:
@@ -134,10 +157,11 @@ namespace VSido
 		unsigned char sum_;
 		bool good_;
 		string msg_;
+		int uid_;
 		
 	public:
-		static unsigned int uidCounter_;
-		static const bool uid_ = false;
+		static unsigned char uidCounter_;
+		static const bool useuid_ = true;
 	};
 	
 	/**
@@ -206,7 +230,7 @@ namespace VSido
 	/** 目標角度設定
 	* 指定したサーボ ID のサーボを、指定した目標角度に移行させる。
 	*/
-	class AngleRequest : public Request,public ExecRequest<AckResponse>
+	class AngleRequest : public Request,public ExecRequest<AngleRequest,AckResponse>
 	{
 	public:
 		/** コンストラクタ
@@ -227,6 +251,12 @@ namespace VSido
 		* @return None
 		*/
 		void angle(unsigned char,double deg);
+
+		/**
+		* 要求コマンドを実行する(No Ack) 
+		* @return None
+		*/
+		virtual void execNA(){Request::execNA();}
 	protected:
 		/** UARTコマンドに変更する。
 		* @return None
@@ -275,7 +305,7 @@ namespace VSido
 	/** コンプライアンス設定
 	* 指定サーボに対しコンプライアンスに関する設定を行う。
 	*/
-	class ComplianceRequest : public Request,public ExecRequest<AckResponse>
+	class ComplianceRequest : public Request,public ExecRequest<ComplianceRequest,AckResponse>
 	{
 	public:
 		/** コンストラクタ
@@ -293,6 +323,11 @@ namespace VSido
 		*/
 		void comp(unsigned char sid,unsigned char cpCW,unsigned char cpCCW);
 
+		/**
+		* 要求コマンドを実行する(No Ack) 
+		* @return None
+		*/
+		virtual void execNA(){Request::execNA();}
 	protected:
 		/** UARTコマンドに変更する。
 		* @return None
@@ -310,7 +345,7 @@ namespace VSido
 	/** 最大・最小角設定
 	* サーボに対し可動範囲の最小、最大角度を指定する。
 	*/
-	class MinMaxAngleRequest : public Request,public ExecRequest<AckResponse>
+	class MinMaxAngleRequest : public Request,public ExecRequest<MinMaxAngleRequest,AckResponse>
 	{
 	public:
 		/** コンストラクタ
@@ -328,6 +363,11 @@ namespace VSido
 		*/
 		void minMax(unsigned char sid,double min,double max);
 		
+		/**
+		* 要求コマンドを実行する(No Ack) 
+		* @return None
+		*/
+		virtual void execNA(){Request::execNA();}
 	protected:
 		/** UARTコマンドに変更する。
 		* @return None
@@ -344,7 +384,7 @@ namespace VSido
 	/** サーボ情報要求
 	* サーボの現在状態を取得する。
 	*/
-	class ServoInfoRequest : public Request,public ExecRequest<ServoInfoResponse>
+	class ServoInfoRequest : public Request,public ExecRequest<ServoInfoRequest,ServoInfoResponse>
 	{
 	public:
 		/** コンストラクタ
@@ -362,6 +402,15 @@ namespace VSido
 		*/
 		void info(unsigned char sid,unsigned char address,unsigned char length);
 		
+		
+		using Request::exec;
+		
+		/**
+		* 要求コマンドを実行する(No block)
+		* @param fptr 関数
+		* @return id
+		*/
+		int exec(function<void(ServoInfoResponse&)> fptr);
 		friend class ServoInfoResponse;
 	protected:
 		/** UARTコマンドに変更する。
@@ -451,7 +500,7 @@ namespace VSido
 	/** フィードバックID 設定
 	* サーボに関するフィードバックID を設定する。
 	*/
-	class FeedBackIDRequest : public Request,public ExecRequest<AckResponse>
+	class FeedBackIDRequest : public Request,public ExecRequest<FeedBackIDRequest,AckResponse>
 	{
 	public:
 		/** コンストラクタ
@@ -465,6 +514,11 @@ namespace VSido
 		*/
 		void sid(unsigned char sid);
 		
+		/**
+		* 要求コマンドを実行する(No Ack) 
+		* @return None
+		*/
+		virtual void execNA(){Request::execNA();}
 	protected:
 		/** UARTコマンドに変更する。
 		* @return None
@@ -482,7 +536,7 @@ namespace VSido
 	/** フィードバック要求
 	* フィードバック ID 設定コマンド（前項参照）で登録したサーボ ID のサーボ情報を取得する。
 	*/
-	class FeedBackRequest : public Request,public ExecRequest<FeedBackResponse>
+	class FeedBackRequest : public Request,public ExecRequest<FeedBackRequest,FeedBackResponse>
 	{
 	public:
 		/** コンストラクタ
@@ -498,7 +552,14 @@ namespace VSido
 		*/
 		void feedback(unsigned char address,unsigned char length);
 		
+		using Request::exec;
 		
+		/**
+		* 要求コマンドを実行する(No block)
+		* @param fptr 関数
+		* @return id
+		*/
+		int exec(function<void(FeedBackResponse&)> fptr);
 		friend class FeedBackResponse;
 	protected:
 		/** UARTコマンドに変更する。
@@ -587,7 +648,7 @@ namespace VSido
 	/**  各種変数（VID）設定 
 	* VID（設定値）を設定する。
 	*/
-	class SetVIDRequest : public Request,public ExecRequest<AckResponse>
+	class SetVIDRequest : public Request,public ExecRequest<SetVIDRequest,AckResponse>
 	{
 	public:
 		/** コンストラクタ
@@ -628,6 +689,11 @@ namespace VSido
 		*/
 		void value2B(string label,unsigned short val);
 		
+		/**
+		* 要求コマンドを実行する(No Ack) 
+		* @return None
+		*/
+		virtual void execNA(){Request::execNA();}
 	protected:
 		/** UARTコマンドに変更する。
 		* @return None
@@ -648,7 +714,7 @@ namespace VSido
 	/** 各種変数（VID）要求
 	* VID（設定値）を要求する。
 	*/
-	class GetVIDRequest : public Request,public ExecRequest<GetVIDResponse>
+	class GetVIDRequest : public Request,public ExecRequest<GetVIDRequest,GetVIDResponse>
 	{
 	public:
 		/** コンストラクタ
@@ -670,6 +736,14 @@ namespace VSido
 		*/
 		void vid(string label);
 
+		using Request::exec;
+
+		/**
+		* 要求コマンドを実行する(No block)
+		* @param fptr 関数
+		* @return id
+		*/
+		int exec(function<void(GetVIDResponse&)> fptr);
 		friend class GetVIDResponse;
 	protected:
 		/** UARTコマンドに変更する。
@@ -679,7 +753,7 @@ namespace VSido
 	private:
 		bool checkVid(unsigned char id);
 	private:
-		const map<int,tuple<string,int,int,int,bool>> fields_;
+		map<int,tuple<string,int,int,int,bool>> fields_;
 		vector<unsigned char> ids_;
 	};
 	/**
@@ -740,13 +814,18 @@ namespace VSido
 	/** フラッシュ書き込み
 	* V-Sido CONNECT RC のフラッシュ領域に、現在の VID 設定値を書き込む。
 	*/
-	class WriteFlashRequest : public Request,public ExecRequest<AckResponse>
+	class WriteFlashRequest : public Request,public ExecRequest<WriteFlashRequest,AckResponse>
 	{
 	public:
 		/** コンストラクタ
 		*/
 		WriteFlashRequest();
 		
+		/**
+		* 要求コマンドを実行する(No Ack) 
+		* @return None
+		*/
+		virtual void execNA(){Request::execNA();}
 	protected:
 	private:
 	};
@@ -758,7 +837,7 @@ namespace VSido
 	/** IO設定
 	* GPIO 入出力ポートの設定を行う。
 	*/
-	class GPIORequest : public Request,public ExecRequest<AckResponse>
+	class GPIORequest : public Request,public ExecRequest<GPIORequest,AckResponse>
 	{
 	public:
 		/** コンストラクタ
@@ -776,6 +855,11 @@ namespace VSido
 		*/
 		void gpio(unsigned char port,bool val);
 		
+		/**
+		* 要求コマンドを実行する(No Ack) 
+		* @return None
+		*/
+		virtual void execNA(){Request::execNA();}
 	protected:
 		/** UARTコマンドに変更する。
 		* @return None
@@ -792,7 +876,7 @@ namespace VSido
 	/**  PWM設定
 	* PWM 制御を行うためのポート設定を行う。
 	*/
-	class PWMRequest : public Request,public ExecRequest<AckResponse>
+	class PWMRequest : public Request,public ExecRequest<PWMRequest,AckResponse>
 	{
 	public:
 		/** コンストラクタ
@@ -811,6 +895,11 @@ namespace VSido
 		*/
 		void pluse(unsigned char port,uint16_t width);
 		
+		/**
+		* 要求コマンドを実行する(No Ack) 
+		* @return None
+		*/
+		virtual void execNA(){Request::execNA();}
 	protected:
 		/** UARTコマンドに変更する。
 		* @return None
@@ -827,12 +916,21 @@ namespace VSido
 	/**  接続確認要求
 	* サーボモータの接続確認を行う。
 	*/
-	class JointRequest : public Request,public ExecRequest<JointResponse>
+	class JointRequest : public Request,public ExecRequest<JointRequest,JointResponse>
 	{
 	public:
 		/** コンストラクタ
 		*/
 		JointRequest();
+
+		using Request::exec;
+		
+		/**
+		* 要求コマンドを実行する(No block)
+		* @param fptr 関数
+		* @return id
+		*/
+		int exec(function<void(JointResponse&)> fptr);
 	protected:
 	private:
 	};
@@ -886,7 +984,7 @@ namespace VSido
 	/** IK設定
 	* IK制御を行うためのデータ送信を行う。
 	*/
-	class IKSetRequest : public Request,public ExecRequest<AckResponse>
+	class IKSetRequest : public Request,public ExecRequest<IKSetRequest,AckResponse>
 	{
 	public:
 		/** コンストラクタ
@@ -953,6 +1051,11 @@ namespace VSido
 		*/
 		void torque(unsigned char kid,signed char x,signed char y,signed char z);
 		
+		/**
+		* 要求コマンドを実行する(No Ack) 
+		* @return None
+		*/
+		virtual void execNA(){Request::execNA();}
 	protected:
 		/** UARTコマンドに変更する。
 		* @return None
@@ -970,7 +1073,7 @@ namespace VSido
 	/** IK設定読み込み
 	* IK制御を行うためのデータ送信を行う。
 	*/
-	class IKReadRequest : public Request,public ExecRequest<IKResponse>
+	class IKReadRequest : public Request,public ExecRequest<IKReadRequest,IKResponse>
 	{
 	public:
 		/** コンストラクタ
@@ -1005,6 +1108,15 @@ namespace VSido
 		* @return なし
 		*/
 		void kid(unsigned char kid);
+
+		using Request::exec;
+
+		/**
+		* 要求コマンドを実行する(No block)
+		* @param fptr 関数
+		* @return id
+		*/
+		int exec(function<void(IKResponse&)> fptr);
 	protected:
 		/** UARTコマンドに変更する。
 		* @return None
@@ -1146,7 +1258,7 @@ namespace VSido
 	/** 移動情報指定
 	* 歩行に関する情報を送信する。
 	*/
-	class WalkRequest : public Request,public ExecRequest<AckResponse>
+	class WalkRequest : public Request,public ExecRequest<WalkRequest,AckResponse>
 	{
 	public:
 		/** コンストラクタ
@@ -1167,6 +1279,11 @@ namespace VSido
 		*/
 		void turn(signed char speed);
 
+		/**
+		* 要求コマンドを実行する(No Ack) 
+		* @return None
+		*/
+		virtual void execNA(){Request::execNA();}
 	protected:
 		/** UARTコマンドに変更する。
 		* @return None
@@ -1180,12 +1297,21 @@ namespace VSido
 	/** 加速度センサ値要求
 	* 加速度センサの情報(X/Y/Z 軸)を取得する（RC 版では機能制限あり）。
 	*/
-	class AccelerationRequest : public Request,public ExecRequest<AccelerationResponse>
+	class AccelerationRequest : public Request,public ExecRequest<AccelerationRequest,AccelerationResponse>
 	{
 	public:
 		/** コンストラクタ
 		*/
 		AccelerationRequest();
+
+		using Request::exec;
+
+		/**
+		* 要求コマンドを実行する(No block)
+		* @param fptr 関数
+		* @return id
+		*/
+		int exec(function<void(AccelerationResponse&)> fptr);
 	protected:
 	private:
 	};
@@ -1239,12 +1365,21 @@ namespace VSido
 	/** 電源電圧要求
 	* 電源電圧を取得する（RC 版では機能未実装）。
 	*/
-	class VoltageRequest : public Request,public ExecRequest<VoltageResponse>
+	class VoltageRequest : public Request,public ExecRequest<VoltageRequest,VoltageResponse>
 	{
 	public:
 		/** コンストラクタ
 		*/
 		VoltageRequest();
+
+		using Request::exec;
+
+		/**
+		* 要求コマンドを実行する(No block)
+		* @param fptr 関数
+		* @return id
+		*/
+		int exec(function<void(VoltageResponse&)> fptr);
 	protected:
 	private:
 	};
@@ -1285,7 +1420,7 @@ namespace VSido
 	/** バイナリ要求
 	* バイナリコマンドを取得する。
 	*/
-	class RawRequest : public Request,public ExecRequest<RawResponse>
+	class RawRequest : public Request,public ExecRequest<RawRequest,RawResponse>
 	{
 	public:
 		/** コンストラクタ
@@ -1315,6 +1450,14 @@ namespace VSido
 		*/
 		void autoHead(){autoHead_ = true;}
 
+		using Request::exec;
+
+		/**
+		* 要求コマンドを実行する(No block)
+		* @param fptr 関数
+		* @return id
+		*/
+		int exec(function<void(RawResponse&)> fptr);
 	protected:
 		/** UARTコマンドに変更する。
 		* @return None
@@ -1471,6 +1614,7 @@ namespace VSido
         bool osx = false;
         bool edison = false;
         bool rasp = false;
+        string name = "";
     };
     extern SystemInfo gSysInfo;
     

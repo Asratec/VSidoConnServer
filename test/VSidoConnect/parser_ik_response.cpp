@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(test_case_IKResponse_0)
 	DUMMY_ACK(recieved);
 
 	IKReadRequest req;
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	dumpTestData(sendBuffer);
 	
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(test_case_IKResponse_1)
 	DUMMY_ACK(recieved);
 
 	IKReadRequest req;
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	BOOST_CHECK_EQUAL("" , ack.JSON());
 
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(test_case_IKResponse_2)
 	DUMMY_ACK(recieved);
 
 	IKReadRequest req;
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	BOOST_CHECK_EQUAL(true , ack.position());
 	BOOST_CHECK_EQUAL(true , ack.torque());
@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE(test_case_IKResponse_3)
 	DUMMY_ACK(recieved);
 
 	IKReadRequest req;
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	BOOST_CHECK_EQUAL(false , ack.position());
 	BOOST_CHECK_EQUAL(false , ack.torque());
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(test_case_IKResponse_4)
 	DUMMY_ACK(recieved);
 
 	IKReadRequest req;
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	BOOST_CHECK_EQUAL(true , true);
 
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(test_case_IKResponse_5)
 	DUMMY_ACK(recieved);
 
 	IKReadRequest req;
-	auto ack = req.exec();
+	auto ack = req.execBK();
 
 	dumpTestData(sendBuffer);
 	

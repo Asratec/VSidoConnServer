@@ -50,9 +50,10 @@ mutex _globalLockMtx;
 extern void IOConnect(const string &device,int baudrate) throw(string);
 extern void IODisConnect(void ) throw(string);
 extern void IOSendUart(list<unsigned char> data);
-extern map<int,tuple<list<unsigned char>,chrono::milliseconds>> IOReadUart();
-extern void IODeleteUartAck(int i);
-extern void IONotifyNewUart(void);
+extern void IOSetRecieveCallback(function<void(list<unsigned char>)> fn);
+
+extern void onRecieve(list<unsigned char>);
+
 
 /** V-Sido CONNECTと接続する
 * @param device V-Sido CONNECTと接続しているデバイス名。
@@ -63,6 +64,7 @@ extern void IONotifyNewUart(void);
 void VSido::connect(const string &device,int baudrate) throw(string)
 {
 	IOConnect(device,baudrate);
+	IOSetRecieveCallback(onRecieve);
 }
 
 /** V-Sido CONNECTと切断する
@@ -72,6 +74,8 @@ void VSido::disConnect(void ) throw(string)
 {
 	IODisConnect();
 }
+
+
 
 
 
@@ -94,44 +98,6 @@ void sendUart(list<unsigned char> data)
 #endif
 	IOSendUart(data);
 }
-
-/** UARTを受信する。 
-* @return 受信データ
-*/
-map<int,tuple<list<unsigned char>,chrono::milliseconds>> readUart()
-{
-	auto ret = IOReadUart();
-#ifdef DUMP_CMD_BINARY
-	cout <<__FILE__ << "@" << __func__ << ":ret=<";
-	for(auto ch:ret)
-	{
-		cout << "0x" << std::hex << (int)ch << "," << std::dec;
-	}
-	cout << ">" << endl;
-#endif
-	return ret;
-}
-
-/** CONNECTからの返事候補をを削除する
-* @param i 番号
-* @return None
-*/
-void deleteUartAck(int i)
-{
-	IODeleteUartAck(i);
-}
-
-
-
-	
-/** 新規コマンド発行したことを受信スレッドに通知する
-* @return None
-*/
-void notifyNewUart()
-{
-	IONotifyNewUart();
-}
-
 
 } // namespace VSido
 
