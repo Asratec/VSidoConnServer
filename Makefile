@@ -72,11 +72,11 @@ doc-client:
 	cd VSidoClient/JSON.Server.Config && doxygen  Doxyfile
 	cp -f VSidoClient/JSON.Server.Config/vscad.png ./doc/VSidoClient/JSON.Server.Config/html/vscad.png
 doc-connect:
-	mkdir -p ./doc/VSidoConnect/cpp
-	cd VSidoConnect/cpp && doxygen  Doxyfile
-	mkdir -p ./doc/VSidoConnect/ruby
-	cd VSidoConnect/ruby && rdoc  VSido.rb
-	cp -rf VSidoConnect/ruby/doc/* ./doc/VSidoConnect/ruby/
+	mkdir -p ./doc/VSidoCommand/cpp
+	cd VSidoCommand/cpp && doxygen  Doxyfile
+	mkdir -p ./doc/VSidoCommand/ruby
+	cd VSidoCommand/ruby && rdoc  VSido.rb
+	cp -rf VSidoCommand/ruby/doc/* ./doc/VSidoCommand/ruby/
 	
 	
 scan-build:
@@ -99,14 +99,14 @@ test-cov-service:test-run-service
 	mv -f ./unittest/gcov/service.result2.xml ./unittest/gcov/service.result.xml	
 	
 test-run-conncet:package-ut
-	-objects/test/VSidoConnect/VSidoConnect.parser.ut --log_format=XML --log_sink=unittest/ut/connect.parser.results.xml --log_level=all --report_level=no
+	-objects/test/VSidoCommand/VSidoCommand.parser.ut --log_format=XML --log_sink=unittest/ut/connect.parser.results.xml --log_level=all --report_level=no
 test-cov-conncet:test-run-conncet
-	cd objects/VSidoConnect && gcovr --xml > ../../unittest/gcov/connect.parser.result.xml
+	cd objects/VSidoCommand && gcovr --xml > ../../unittest/gcov/connect.parser.result.xml
 	sed -e 's/<source>.<\/source>/<source>\/<\/source>/g' ./unittest/gcov/connect.parser.result.xml > ./unittest/gcov/connect.parser.result2.xml 2> /dev/null
 	mv -f ./unittest/gcov/connect.parser.result2.xml ./unittest/gcov/connect.parser.result.xml
 	
 	
-CCCC_FILES := $(shell find VSidoConnect/cpp/ -type f -name *pp)
+CCCC_FILES := $(shell find VSidoCommand/cpp/ -type f -name *pp)
 CCCC_FILES += $(shell find VSidoService/ -type f  -name *pp)
 
 cccc:

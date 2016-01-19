@@ -49,6 +49,7 @@ using namespace std;
 #include "ws_request.hpp"
 #include "ws_response.hpp"
 #include "cmd_common.hpp"
+#include "dispatch_perf.hpp"
 
 #include "VSido.hpp"
 #include "VSidoMotion.hpp"
@@ -91,6 +92,7 @@ extern string execShell(string cmd);
 #include "picojson.h"
 
 
+bool gBoolPerfChecker = false;
 
 /** 入口
 * @param コマンドの引数なし
@@ -98,6 +100,15 @@ extern string execShell(string cmd);
 */
 int main(int argc ,char *argv[])
 {
+	if(argc > 1)
+	{
+		if(string(argv[1]) == "perf")
+		{
+			gBoolPerfChecker = true;
+		}
+	}
+    FATAL_VAR(gBoolPerfChecker);
+    
 	if(SIG_ERR == signal(SIGINT, sig_int_catch))
 	{
 		perror("failed to set signal handler\n");
@@ -145,16 +156,19 @@ int main(int argc ,char *argv[])
 	Motion motion;
 	motion.loadXmlAll();
 	
+	PerformanceChecker perf;
 	thread threadDisp(std::ref(dispath));
     thread threadReqRS(std::ref(reqRS));
     thread threadReqWS(std::ref(reqWS));
 	thread threadMotion(std::ref(motion));
+	thread threadPerf(std::ref(perf));
     
     
     threadDisp.join();
     threadReqRS.join();    
     threadReqWS.join();
 	threadMotion.join();
+	threadPerf.join();
  
 	VSido::disConnect();
     return 0;

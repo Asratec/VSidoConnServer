@@ -53,7 +53,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
 
-add_library( VSidoConnect SHARED
+add_library( VSidoCommand SHARED
 	VSidoConnect.hpp
 	vsido_servo_info_table.hpp
 	vsido_vid_table.hpp
@@ -62,7 +62,7 @@ add_library( VSidoConnect SHARED
 	${__UART}
 )
 
-add_library( VSidoConnect_s STATIC
+add_library( VSidoCommand_s STATIC
 	VSidoConnect.hpp
 	vsido_servo_info_table.hpp
 	vsido_vid_table.hpp
@@ -72,13 +72,13 @@ add_library( VSidoConnect_s STATIC
 )
 
 
-add_executable( VSidoConnect.sample 
+add_executable( VSidoCommand.sample 
 	VSidoConnect.hpp
 	sampleAll.cpp
 )
 
-target_link_libraries( VSidoConnect.sample 
-	VSidoConnect_s
+target_link_libraries( VSidoCommand.sample 
+	VSidoCommand_s
 )
 
 

@@ -47,13 +47,13 @@ set(CMAKE_LD_FLAGS_DEBUG    "${CMAKE_LD_FLAGS_DEBUG} -pg -g -fprofile-arcs")
 include_directories(${PROJECT_SOURCE_DIR}/3dpart)
 
 add_subdirectory(VSidoClient)
-add_subdirectory(VSidoConnect)
+add_subdirectory(VSidoCommand)
 add_subdirectory(VSidoMotion)
 add_subdirectory(VSidoService)
 add_subdirectory(VSidoWeb)
 
 IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 	add_subdirectory(test/VSidoService)
-	add_subdirectory(test/VSidoConnect)
+	add_subdirectory(test/VSidoCommand)
 ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 

@@ -271,12 +271,30 @@ void onRecieve(list<unsigned char> binary)
 		auto binaryTmp = binary;
 		binaryTmp.pop_front();
 		uid = binaryTmp.front() << 8;
-		binaryTmp.pop_front();
-		uid |= binaryTmp.front();
-		DUMP_VAR(uid);
-		if(0 != uid)
+		if(uid >= 0x80)
 		{
-			dispatchResponse(uid,binary);
+			binaryTmp.pop_front();
+			uid |= binaryTmp.front();
+			DUMP_VAR(uid);
+			if(0 != uid)
+			{
+				dispatchResponse(uid,binary);
+			}
+		}
+		else
+		{
+			// no use uid for response.
+			// raw no ack command.
+			lock_guard<mutex> lock(handlerMtx);
+			auto it = RawRespHandler.find(0);
+			if(it != RawRespHandler.end())
+			{
+				auto req = std::get<0>(it->second);
+				RawResponse resp(binary,req);
+				auto fn = std::get<1>(it->second);
+				fn(resp);
+				RawRespHandler.erase(it);
+			}
 		}
 	}
 }

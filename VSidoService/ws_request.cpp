@@ -277,7 +277,7 @@ static int callback_vsido_cmd(struct libwebsocket_context * ctx,
         	{
         		printf("LWS_CALLBACK_RECEIVE exception %s:%d\n",__FILE__,__LINE__);
         	}
-			usleep(1000*1);
+			//usleep(1000*1);
             break;
         }
 		case LWS_CALLBACK_SERVER_WRITEABLE:
@@ -302,8 +302,11 @@ static int callback_vsido_cmd(struct libwebsocket_context * ctx,
 				FATAL_VAR(wsi);
 			}
 	        delete []data;
-			usleep(1000*1);
-			libwebsocket_callback_on_writable(ctx,wsi);
+			//usleep(1000*1);
+			if(queAck->second.size() >1)
+			{
+				libwebsocket_callback_on_writable(ctx,wsi);
+			}
 			queAck->second.pop_front();
 			break;
 		}

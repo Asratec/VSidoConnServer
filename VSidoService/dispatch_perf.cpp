@@ -27,74 +27,61 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#ifndef __DEBUG_HPP__
-#define __DEBUG_HPP__
+#include "dispatch_perf.hpp"
+#include "VSido.hpp"
+using namespace VSido;
+#include <string>
+#include <iostream>
+#include <random>
+#include <mutex>              // std::mutex, std::unique_lock
+#include <condition_variable> // std::condition_variable
+#include <thread>
 
-#include <mutex>              // std::mutex, std::lock_guard
 using namespace std;
-extern mutex _globalLockMtx;
-#include <unistd.h>
-#include <sys/time.h>
-#include <time.h>
 
 
-#define DUMP_UART_IO
+#include "debug.h"
 
-
-#if 1
-#ifdef __APPLE__
-#define DUMP_SPEED_CHECK(msg,...) {\
-	struct timeval   tv_dump;\
-	gettimeofday(&tv_dump,NULL);\
-	printf("Time Stamp :[%0.3f] at %s\n",tv_dump.tv_sec + (double)tv_dump.tv_usec/(double)(1000*1000),msg); \
+/** コンストラクタ
+*/
+PerformanceChecker::PerformanceChecker()
+{
+	
 }
-#else
-#define DUMP_SPEED_CHECK(msg,...) {\
-	struct timespec  tv_dump;\
-	clock_gettime(CLOCK_MONOTONIC,&tv_dump);\
-	printf("Time Stamp :[%0.3f] at %s\n", tv_dump.tv_sec + (double)tv_dump.tv_nsec/(double)(1000*1000*1000),msg); \
+
+static const int iConstPerfTestWaitTimeout = 25;
+static mutex reqMtx;
+static condition_variable reqCv;
+
+extern bool gBoolPerfChecker;
+
+void PerformanceChecker::operator()()
+{
+	int forward = 0;
+	std::random_device rnd;
+	int turn = rnd();
+	while(gBoolPerfChecker)
+	{
+		WalkRequest req;
+		req.forward( (forward++)%200 -100);
+		req.turn( (turn++)%200 -100);
+//		req.forward( 0);
+//		req.turn( 0);
+		if(req)
+		{
+			req.execNA();
+		}
+		else
+		{
+		}
+#if 0
+		unique_lock<mutex> lck(reqMtx);
+		auto waitRet = reqCv.wait_for(lck,std::chrono::milliseconds(iConstPerfTestWaitTimeout));
+		if(cv_status::timeout==waitRet)
+		{
+			//printf("%s,%d timeout\n",__FILE__,__LINE__);
+		}
+#endif
+	}
 }
-#endif // __APPLE__
-#else
-#define DUMP_SPEED_CHECK(...)
-#endif
-
-//#define DUMP_CMD_BINARY
-
-
-#if 1
-	#define FATAL_VAR(x) \
-	{	\
-		lock_guard<mutex> lock(_globalLockMtx);\
-		cout << __FILE__ << ":" << __func__ << ":" << __LINE__ << " " << #x << "=<" << x <<  ">" << endl; \
-	}
-#else
-	#define FATAL_VAR(x)
-#endif
-
-
-#if 0
-	#define DUMP_VAR(x) \
-	{	\
-		lock_guard<mutex> lock(_globalLockMtx);\
-		cout << __FILE__ << ":" << __func__ << ":" << __LINE__ << " " << #x << "=<" << x <<  ">" << endl; \
-	}
-#else
-	#define DUMP_VAR(x)
-#endif
-
-
-
-#if 0
-	#define DUMP_VAR_DETAILS(x) \
-	{	\
-		lock_guard<mutex> lock(_globalLockMtx);\
-		cout << __FILE__ << ":" << __func__ << ":" << __LINE__ << " " << #x << "=<" << x <<  ">" << endl;\
-	}
-#else
-	#define DUMP_VAR_DETAILS(x) 
-
-#endif
-
-#endif //__DEBUG_HPP__
 

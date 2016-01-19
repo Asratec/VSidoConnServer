@@ -27,8 +27,8 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#ifndef __VISIDO_REQUEST_RAW_HPP__
-#define __VISIDO_REQUEST_RAW_HPP__
+#ifndef __VISIDO_PERFORMANCE_CHECKER_HPP__
+#define __VISIDO_PERFORMANCE_CHECKER_HPP__
 
 
 #include <list>
@@ -41,32 +41,20 @@ namespace VSido
 {
 
 /**
-* Raw UART データ
+* 速度テスト
 */
-class RawJSONRequest : public JSONRequest
+class PerformanceChecker 
 {
 public:
 	/** コンストラクタ
-	* @param[in] raw httpサーバーからのJson要求
-	*  {
-	* 	 "cmd" : "raw" "Binary",
-	* 	 "exec": []
-	*  }
 	*/
-    RawJSONRequest(picojson::object &raw);
-	
-	/** コマンドを実行する。
-	* @param None
-	* @return 返事のJSON文字列
+    PerformanceChecker();
+
+	/** テストスレッド本体
+	* @return None
 	*/
-    virtual string exec();
-private:
-    RawJSONRequest(void);
-private:
-    picojson::object &_raw;
-	bool block_;
+    void operator()();
 };
 } // namespace VSido
 
-#endif //__VISIDO_REQUEST_RAW_HPP__
-
+#endif //__VISIDO_PERFORMANCE_CHECKER_HPP__

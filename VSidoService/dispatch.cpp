@@ -39,6 +39,7 @@ using namespace VSido;
 #include <thread>
 #include <tuple>
 #include <atomic>
+#include <climits>
 using namespace std;
 
 
@@ -58,13 +59,14 @@ static mutex dataMtx;
 
 static long long globalSendTime = 0;
 
-/// mili sec
-static const int iConstVSidoCommTimeout = 100;
 
 static const int iConstRequestWaitTimeout = 1;
 
 
-static const int iConstBufferCommandCounter = 2;
+//static const int iConstBufferCommandCounter = 5;
+//static const int iConstBufferCommandCounter = INT_MAX;
+static const int iConstBufferCommandCounter = 16;
+
 
 static list<tuple<string,shared_ptr<WSResponse>>> uniq_wsReq;
 static list<tuple<string,shared_ptr<RSResponse>>> uniq_rsReq;
@@ -214,7 +216,19 @@ void Dispatcher::trySendWSReq(void)
 		lock_guard<mutex> lock(dataMtx);
 		if(false == this->_wsReq.empty())
 		{
-			req = this->_wsReq.back();
+			string msg = "Que out start,remain in Que size =<";
+			msg += to_string(this->_wsReq.size()-1);
+			msg += ">";
+			DUMP_SPEED_CHECK(msg.c_str());
+			while(iConstBufferCommandCounter < this->_wsReq.size())
+			{
+				auto busyReq = this->_wsReq.front();
+				auto busyRes = std::get<1>(busyReq);
+				busyRes->ackBusy();
+				this->_wsReq.pop_front();
+			}
+			req = this->_wsReq.front();
+			this->_wsReq.pop_front();
 		}
 		else
 		{
@@ -258,20 +272,6 @@ void Dispatcher::trySendWSReq(void)
 		auto rsRes = std::get<1>(req);
 		rsRes->ack(resValue.serialize());
 	}
-	// clear up
-	{
-		// last one is sent,so pop it.
-		lock_guard<mutex> lock(dataMtx);
-		this->_wsReq.pop_back();
-		// if there are more buffered than iConstBufferCommandCounter
-		// sent busy and pop,from front side.
-		while( iConstBufferCommandCounter < this->_wsReq.size())
-		{
-			auto rsRes = std::get<1>(this->_wsReq.front());
-			rsRes->ackBusy();
-			this->_wsReq.pop_front();
-		}
-	}
 }
 void Dispatcher::trySendRSReq(void)
 {
@@ -281,7 +281,15 @@ void Dispatcher::trySendRSReq(void)
 		lock_guard<mutex> lock(dataMtx);
 		if(false == this->_rsReq.empty())
 		{
-			req = this->_rsReq.back();
+			while(iConstBufferCommandCounter < this->_rsReq.size())
+			{
+				auto busyReq = this->_rsReq.front();
+				auto busyRes = std::get<1>(busyReq);
+				busyRes->ackBusy();
+				this->_rsReq.pop_front();
+			}
+			req = this->_rsReq.front();
+			this->_rsReq.pop_front();
 		}
 		else
 		{
@@ -326,20 +334,6 @@ void Dispatcher::trySendRSReq(void)
 		rsRes->ack(resValue.serialize());
 		
 	}
-	// clear up
-	{
-		// last one is sent,so pop it.
-		lock_guard<mutex> lock(dataMtx);
-		this->_rsReq.pop_back();
-		// if there are more buffered than iConstBufferCommandCounter
-		// sent busy and pop,from front side.
-		while( iConstBufferCommandCounter < this->_rsReq.size())
-		{
-			auto rsRes = std::get<1>(this->_rsReq.front());
-			rsRes->ackBusy();
-			this->_rsReq.pop_front();
-		}
-	}
 }
 
 void Dispatcher::onResponse(int id ,const string & msg)
@@ -347,10 +341,6 @@ void Dispatcher::onResponse(int id ,const string & msg)
 	auto it = uniq_nb_ws.find(id);
 	if(uniq_nb_ws.end() != it)
 	{
-		auto res = it->second;
-		res->ack(msg);
-		// 正常に返事したものをキューから削除する
-		uniq_nb_ws.erase(it);
 		
 		// 返事していないゴミを削除する
 		// 先に要求出したが、まだ来ないものについて、エラーを返し。
@@ -365,7 +355,7 @@ void Dispatcher::onResponse(int id ,const string & msg)
 				if(tryIt->first < id || tryIt->first > gLastRequestUID)
 				{
 					auto resBad = tryIt->second;
-					res->ackMiss();
+					resBad->ackMiss();
 					tryIt = uniq_nb_ws.erase(tryIt);
 				}
 				else
@@ -378,7 +368,7 @@ void Dispatcher::onResponse(int id ,const string & msg)
 				if(tryIt->first > gLastRequestUID && tryIt->first < id )
 				{
 					auto resBad = tryIt->second;
-					res->ackMiss();
+					resBad->ackMiss();
 					tryIt = uniq_nb_ws.erase(tryIt);
 				}
 				else
@@ -387,14 +377,15 @@ void Dispatcher::onResponse(int id ,const string & msg)
 				}
 			}
 		}
+		/// 
+		auto res = it->second;
+		res->ack(msg);
+		// 正常に返事したものをキューから削除する
+		uniq_nb_ws.erase(it);
 	}
 	auto itRS = uniq_nb_rs.find(id);
 	if(uniq_nb_rs.end() != itRS)
 	{
-		auto res = itRS->second;
-		res->ack(msg);
-		// 正常に返事したものをキューから削除する
-		uniq_nb_rs.erase(itRS);
 		// 返事していないゴミを削除する
 		// 先に要求出したが、まだ来ないものについて、エラーを返し。
 		auto tryIt = uniq_nb_rs.begin();
@@ -408,7 +399,7 @@ void Dispatcher::onResponse(int id ,const string & msg)
 				if(tryIt->first < id || tryIt->first > gLastRequestUID)
 				{
 					auto resBad = tryIt->second;
-					res->ackMiss();
+					resBad->ackMiss();
 					tryIt = uniq_nb_rs.erase(tryIt);
 				}
 				else
@@ -421,7 +412,7 @@ void Dispatcher::onResponse(int id ,const string & msg)
 				if(tryIt->first > gLastRequestUID && tryIt->first < id )
 				{
 					auto resBad = tryIt->second;
-					res->ackMiss();
+					resBad->ackMiss();
 					tryIt = uniq_nb_rs.erase(tryIt);
 				}
 				else
@@ -430,6 +421,10 @@ void Dispatcher::onResponse(int id ,const string & msg)
 				}
 			}
 		}
+		auto res = itRS->second;
+		res->ack(msg);
+		// 正常に返事したものをキューから削除する
+		uniq_nb_rs.erase(itRS);
 	}
 	auto itReq = uniq_nb_JSONReq.find(id);
 	if(uniq_nb_JSONReq.end() != itReq)

@@ -11,7 +11,7 @@ add_executable (motiontest
 )
 target_link_libraries( motiontest
 	VSidoMotion
-	VSidoConnect_s
+	VSidoCommand_s
 	pthread
 )
 

@@ -7,7 +7,7 @@ include_directories(${CMAKE_INSTALL_PREFIX}/include)
 LINK_DIRECTORIES(${CMAKE_INSTALL_PREFIX}/lib)
 include_directories(./)
 
-include_directories(${PROJECT_SOURCE_DIR}/VSidoConnect/cpp)
+include_directories(${PROJECT_SOURCE_DIR}/VSidoCommand/cpp)
 
 
 
@@ -25,7 +25,7 @@ add_executable( VSidoConnect.parser.ut
 
 
 target_link_libraries( VSidoConnect.parser.ut
-	VSidoConnect_s
+	VSidoCommand_s
 	pthread
 	websockets
 	z
@@ -40,7 +40,7 @@ add_executable( VSidoConnect.io.ut
 
 
 target_link_libraries( VSidoConnect.io.ut
-	VSidoConnect_s
+	VSidoCommand_s
 	pthread
 	websockets
 	z

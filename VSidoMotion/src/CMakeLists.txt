@@ -31,7 +31,7 @@
 include_directories(../include)
 include_directories(./)
 include_directories(./tinyxml2)
-include_directories(${PROJECT_SOURCE_DIR}/VSidoConnect/cpp)
+include_directories(${PROJECT_SOURCE_DIR}/VSidoCommand/cpp)
 
 
 file(GLOB __CXX "./*.cpp")

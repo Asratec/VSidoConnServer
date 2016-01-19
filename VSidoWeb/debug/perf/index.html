@@ -23,6 +23,14 @@ $(function(){
 		int_command = setInterval(send_walk_command, parseInt($("#interval").val()));
 	});
 
+	$("#start_ik_set").click(function() {
+		if (int_command) {
+			clearInterval(int_command);
+			int_command = null;
+		}
+		int_command = setInterval(send_set_ik_command, parseInt($("#interval").val()));
+	});
+
 	$("#start_angle").click(function() {
 		if (int_command) {
 			clearInterval(int_command);
@@ -59,6 +67,12 @@ $(function(){
 	<br>
 	<div>
 		<input type="button" id="start_walk" value="歩行/送信テスト開始" />
+	</div>
+	<br>
+	<br>
+	<br>
+	<div>
+		<input type="button" id="start_ik_set" value="IK設定/送信テスト開始" />
 	</div>
 	<br>
 	<br>

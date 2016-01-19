@@ -27,6 +27,27 @@ function send_walk_command() {
     console.log('sent_num:',sent_num);
 }
 
+var setIK_CB = function (evt) {
+  try {
+    console.log(evt);
+    received_num++;
+    console.log('received_num:',received_num);
+  } catch(e) {
+  }
+};
+function send_set_ik_command() {
+    var ik = new vsido.SetIK({'position':true});
+	ik.setPosition (1,100,100,0);
+	ik.setPosition (2,100,100,0);
+	ik.setPosition (3,100,100,0);
+	ik.setPosition (4,100,100,0);
+	ik.setPosition (5,100,100,0);
+    console.log(JSON.stringify(ik));
+    vc.send(ik,setIK_CB);
+    sent_num++;
+    console.log('sent_num:',sent_num);
+}
+
 
 var readAngle_CB = function (evt) {
   try {
@@ -36,6 +57,9 @@ var readAngle_CB = function (evt) {
   } catch(e) {
   }
 };
+
+
+
 
 function send_read_angle_command() {
     var angle = new vsido.GetServoAngle();

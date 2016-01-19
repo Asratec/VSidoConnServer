@@ -139,7 +139,7 @@ vsido.Connect = function(config) {
 			if (self.debug) {
 				console.log('[vsido.Connect.debug]onopen:',evt);
 			}
-			self.onOpenIntervalVar = setInterval(self.wsOpenReadyCheck_,100,self);
+			self.onOpenIntervalVar = setInterval(self.wsOpenReadyCheck_,10,self);
 			self.ready = true;
 		};
 		self.ws.onclose = function(evt) {
@@ -199,6 +199,9 @@ vsido.Connect.prototype.wsOpenReadyCheck_ = function(self) {
 
 /**
 * V-Sido CONNECTにコマンドを送信する。
+* ※接続方式より通信速度の差があるため。
+* ※送信速度を適切に調整してください。
+* ※秒間20回目安。
 * @method send
 * @param {object} 　　　　cmd コマンド
 * @param {function} 　cb 返事のコールバック

@@ -133,6 +133,8 @@ void UARTConnect::openSPP()
 
 	newtio.c_iflag |=  IGNBRK | IGNPAR;
 	newtio.c_iflag &= ~(ICRNL | IXON);
+//	newtio.c_iflag &= ~(ICRNL);
+//	newtio.c_iflag |= IXOFF;
 	
 
 	newtio.c_cflag =  CS8 | CLOCAL | CREAD;

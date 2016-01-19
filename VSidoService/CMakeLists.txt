@@ -15,7 +15,7 @@ file(GLOB _DISPATH_CXX "dispatch*.cpp")
 
 
 include_directories(${CMAKE_INSTALL_PREFIX}/include)
-include_directories(${PROJECT_SOURCE_DIR}/VSidoConnect/cpp)
+include_directories(${PROJECT_SOURCE_DIR}/VSidoCommand/cpp)
 include_directories(${PROJECT_SOURCE_DIR}/VSidoMotion/include)
 
 LINK_DIRECTORIES(${CMAKE_INSTALL_PREFIX}/lib)
@@ -40,7 +40,7 @@ add_executable (VSido.srv
 target_link_libraries( VSido.srv 
 	VSido.Service
 	VSidoMotion
-	VSidoConnect_s
+	VSidoCommand_s
 	pthread
 	websockets
 	z

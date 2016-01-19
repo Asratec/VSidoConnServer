@@ -74,6 +74,7 @@ Request::Request()
 ,length_(0x4)
 ,sum_(0x0)
 ,good_(true)
+,uid_(0)
 {
 	if(useuid_)
 	{

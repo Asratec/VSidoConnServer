@@ -43,6 +43,7 @@ using namespace std;
 RawJSONRequest::RawJSONRequest(picojson::object &raw)
 :JSONRequest()
 ,_raw(raw)
+,block_(false)
 {
 }
 
@@ -68,6 +69,7 @@ string RawJSONRequest::exec()
 				DUMP_VAR((int)byte);
 				req.bin(byte);
 			}
+			block_ = true;
 		}
 		if(rawV.contains("op"))
 		{
@@ -91,34 +93,58 @@ string RawJSONRequest::exec()
 	}
 	if(req)
 	{
-		auto fn = [this](RawResponse& resp){
+		if(false ==block_)
+		{
+			auto fn = [this](RawResponse& resp){
+				if(resp.timeout())
+				{
+					_res["type"] = picojson::value(string("timeout"));
+					picojson::value resValue(_res);
+					Dispatcher::onResponse(uid_,resValue.serialize());
+					return ;
+				}
+				if(resp)
+				{
+					_res["type"] = picojson::value(string("Binary"));
+					string raw = static_cast<string>(resp);
+					_res["raw"] = picojson::value(raw);
+					picojson::value resValue(_res);
+					Dispatcher::onResponse(uid_,resValue.serialize());
+					return ;
+				}
+				else
+				{
+					_res["type"] = picojson::value(string("error"));
+					_res["detail"] = picojson::value(string(""));
+					picojson::value resValue(_res);
+					Dispatcher::onResponse(uid_,resValue.serialize());
+					return ;
+				}
+			};
+			uid_ = req.exec(fn);
+			return "";
+		}
+		else
+		{
+			auto resp = req.execBK();
 			if(resp.timeout())
 			{
 				_res["type"] = picojson::value(string("timeout"));
-				picojson::value resValue(_res);
-				Dispatcher::onResponse(uid_,resValue.serialize());
-				return ;
 			}
 			if(resp)
 			{
 				_res["type"] = picojson::value(string("Binary"));
 				string raw = static_cast<string>(resp);
 				_res["raw"] = picojson::value(raw);
-				picojson::value resValue(_res);
-				Dispatcher::onResponse(uid_,resValue.serialize());
-				return ;
 			}
 			else
 			{
 				_res["type"] = picojson::value(string("error"));
 				_res["detail"] = picojson::value(string(""));
-				picojson::value resValue(_res);
-				Dispatcher::onResponse(uid_,resValue.serialize());
-				return ;
 			}
-		};
-		uid_ = req.exec(fn);
-		return "";
+			picojson::value resValue(_res);
+			return resValue.serialize();
+		}
 	}
 	else
 	{

@@ -29,8 +29,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "VSidoConnectUartSend.hpp"
 using namespace VSido;
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
 #include <unistd.h>
 #include <termios.h>
+#include <poll.h>
+
 
 #include <iostream>
 #include <thread>
@@ -39,12 +45,15 @@ using namespace std;
 
 #include "debug.h"
 
-#include <sys/time.h>
 
 long long globalSendUartTime = 0;
 
 static int const iConstAvarageOnceWrite = 16;
 static int const iConstWriteTryMergin = 10;
+
+static int const iConstUartIntervalMilliSecond = 25;
+static int const iConstUartReadWaitMilliSecond = 1;
+
 
 
 /** コンストラクタ
@@ -58,87 +67,148 @@ UARTSend::UARTSend()
 
 
 
-static mutex gUartWriteMutex;
+mutex gUartWriteMutex;
+//condition_variable gUartWriteCV;
 /** VSidoと繋がるURATにコマンド送信
 * @param data VSido制御コマンド
 * @return None
 */
 void UARTSend::send(const list<unsigned char> &data)
 {
-	//UARTRead::send(data);
-	lock_guard<mutex> lock(gUartWriteMutex);
+
+	// give a interval to uart write.
+	auto now = chrono::duration_cast<chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+	static auto prev = now;
+	auto elapsed_tp = now - prev;
+	FATAL_VAR(elapsed_tp);
+	int remainMiliSec = iConstUartIntervalMilliSecond - elapsed_tp;
+	FATAL_VAR(remainMiliSec);
+	static bool firstTime = true;
+	if(false == firstTime && 0 < remainMiliSec)
+	{
+		DUMP_SPEED_CHECK("sleep_for start");
+		this_thread::sleep_for(chrono::milliseconds(remainMiliSec));
+		DUMP_SPEED_CHECK("sleep_for end");
+		prev = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now().time_since_epoch()).count();
+	}
+	else
+	{
+		prev = now;
+	}
     write(data);
+	firstTime = false;
 }
 
 
 void UARTSend::write(const list<unsigned char> &data)
 {
-    DUMP_VAR(_fd);
+	DUMP_UART_IO_WRITE(data);
+	DUMP_SPEED_CHECK("writes start");
+
+	
+	DUMP_VAR(_fd);
 	if(0 >_fd)
 	{
 		return;
 	}
-#ifdef DUMP_UART_IO
-	printf("send data data.size()=<%d><\n",data.size());
-#endif
+
 	unsigned char buf[data.size()];
 	int i = 0;
     for (const auto ch:data)
     {
     	buf[i++] = ch;
-#ifdef DUMP_UART_IO
-    	printf("0x%02x,",ch);
-#endif
     }
-#ifdef DUMP_UART_IO
-	printf(">\n");
-#endif
+    DUMP_SPEED_CHECK_DETAILS();
 
 	struct timeval pred_tv;
 	gettimeofday(&pred_tv,NULL);
 	auto preMiliSec = pred_tv.tv_sec *1000 + pred_tv.tv_usec /1000;
 
-	DUMP_SPEED_CHECK("writes start");
+    DUMP_SPEED_CHECK_DETAILS();
+#if 0 // do not flush.
 	auto tcret = tcflush(_fd,TCIOFLUSH);
 	if (0 > tcret) 
 	{
         perror("tcflush");
 		tryReconnect();
 	}
-	
-    auto writeRet = ::write(_fd,buf,data.size());
-	/// when write buffer is full,send and wait
-	/// retry to write.
-	int counter = iConstWriteTryMergin + (data.size()/iConstAvarageOnceWrite);
-	while(writeRet < data.size() && 0 < counter-- )
+#endif
+
+#if 0 // test read first.
+	int byteInTTY = 1;
+	ioctl(_fd,FIONREAD,&byteInTTY);
+	while(byteInTTY > 0)
 	{
-		FATAL_VAR(writeRet);
-		FATAL_VAR(data.size());
-		auto tcRet = tcdrain(_fd);
-		if(0 > tcRet)
+		gUartWriteCV.notify_all();
+		this_thread::sleep_for(chrono::milliseconds(iConstUartReadWaitMilliSecond));
+		ioctl(_fd,FIONREAD,&byteInTTY);
+		if(byteInTTY > 0)
 		{
-			FATAL_VAR(tcRet);
-			perror("tcdrain");
+			FATAL_VAR(byteInTTY);
 		}
-		auto rWRet = ::write(_fd,buf+writeRet,data.size() - writeRet);
-		if(0 < rWRet)
-		{
-			writeRet += rWRet;
-		}
-		else
-		{
-        	perror("write");
-			FATAL_VAR(rWRet);
-			break;
-		}
-		if(writeRet == data.size())
+	}
+#endif
+	
+	lock_guard<mutex> lock(gUartWriteMutex);
+    DUMP_SPEED_CHECK_DETAILS();
+	fd_set writefds;
+	FD_ZERO(&writefds);
+	FD_SET(_fd,&writefds);
+    DUMP_SPEED_CHECK_DETAILS();
+	if(select(_fd+1,NULL,&writefds,NULL,NULL))
+	{
+        DUMP_SPEED_CHECK_DETAILS();
+	    auto writeRet = ::write(_fd,buf,data.size());
+		/// when write buffer is full,send and wait
+		/// retry to write.
+		int counter = iConstWriteTryMergin + (data.size()/iConstAvarageOnceWrite);
+		while(writeRet < data.size() && 0 < counter-- )
 		{
 			FATAL_VAR(writeRet);
 			FATAL_VAR(data.size());
-			FATAL_VAR(counter);
+            DUMP_SPEED_CHECK_DETAILS();
+			auto tcRet = tcdrain(_fd);
+			if(0 > tcRet)
+			{
+				FATAL_VAR(tcRet);
+				perror("tcdrain");
+			}
+			FD_ZERO(&writefds);
+			FD_SET(_fd,&writefds);
+            DUMP_SPEED_CHECK_DETAILS();
+			if(select(_fd+1,NULL,&writefds,NULL,NULL))
+			{
+                DUMP_SPEED_CHECK_DETAILS();
+				auto rWRet = ::write(_fd,buf+writeRet,data.size() - writeRet);
+				if(0 < rWRet)
+				{
+					writeRet += rWRet;
+				}
+				else
+				{
+		        	perror("write");
+					FATAL_VAR(rWRet);
+					break;
+				}
+				if(writeRet == data.size())
+				{
+					FATAL_VAR(writeRet);
+					FATAL_VAR(data.size());
+					FATAL_VAR(counter);
+				}
+			}
+			else
+			{
+				///
+			}
 		}
+		DUMP_VAR(writeRet);
 	}
-	DUMP_VAR(writeRet);
+	else 
+	{
+		///
+	}
+    DUMP_SPEED_CHECK_DETAILS();
 	auto tcRet = tcdrain(_fd);
 	if(0 > tcRet)
 	{
@@ -146,13 +216,16 @@ void UARTSend::write(const list<unsigned char> &data)
 		perror("tcdrain");
 	}
 	DUMP_VAR(tcRet);
+    DUMP_SPEED_CHECK_DETAILS();
 
+	
 	struct timeval tv;
 	gettimeofday(&tv,NULL);
 	globalSendUartTime = tv.tv_sec *1000 + tv.tv_usec /1000;
 	
 	auto uartWriteTime = globalSendUartTime -  preMiliSec;
 	
+//	gUartWriteCV.notify_all();
 	DUMP_VAR(uartWriteTime);
 	DUMP_SPEED_CHECK("writes end");
 

@@ -31,9 +31,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VSidoConnect.hpp"
 using namespace VSido;
 
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/select.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <string.h>
 #include <termios.h>
+#include <poll.h>
 
 #include <iostream>
 #include <chrono>
@@ -41,8 +46,6 @@ using namespace VSido;
 #include <mutex>              // std::mutex
 #include <condition_variable>
 using namespace std;
-
-#include <sys/time.h>
 
 #include "debug.h"
 
@@ -61,6 +64,11 @@ extern long long globalSendUartTime;
 
 
 
+
+static mutex gUartReadMutex;
+static const int iConstUARTReadWaitWriteTimeout = 30;
+extern mutex gUartWriteMutex;
+extern condition_variable gUartWriteCV;
 
 
 /** コンストラクタ
@@ -90,6 +98,10 @@ unsigned char dummy_ack[] =
 */
 void UARTRead::operator()()
 {
+    struct pollfd fds;
+    memset(&fds, 0 , sizeof(fds));
+    int    nfds = 1;
+    
     while(true)
     {
 		if(0 >_fd)
@@ -97,24 +109,41 @@ void UARTRead::operator()()
 			usleep(100*1000);
 		}    	
 #if 1 // read from uart
-        unsigned char data = 0;
-    	auto readSize = read(_fd,&data,sizeof(data));
-        if(0 < readSize)
-        {
-	        put(data);
-        }
-    	else if(0 == readSize)
+    	static unsigned char data[256] = {0};
+        fds.fd = _fd;
+        fds.events = POLLIN;
+        auto rc = poll(&fds, nfds, -1);
+        if ( rc >0)
     	{
-//    		printf("no data\n");
+    		int readSize = -1;
+    		{
+    				lock_guard<mutex> lock(gUartWriteMutex);
+	    			readSize = read(_fd,data,sizeof(data));
+    		}
+	        if(0 < readSize)
+	        {
+	        	for(int i = 0; i < readSize ;i++)
+	        	{
+		        	put(data[i]);
+	        	}
+	        }
+	    	else if(0 == readSize)
+	    	{
+	//    		printf("no data\n");
+	    	}
+	        else
+	        {
+	//            perror("read ");
+	        }
     	}
-        else
-        {
-//            perror("read ");
-        }
+    	else
+    	{
+    		///
+    	}
+
 #endif
 		this_thread::yield();
     	
-//    	this->trySendBuffer();
 
     	
 //// debug dummy
@@ -145,10 +174,6 @@ void UARTRead::put(unsigned char data)
     if(_constKST == data)
     {
        DUMP_SPEED_CHECK("recieve begin msg");
-#ifdef DUMP_UART_IO
-       printf("read uart dump begin < \n");
-       printf("0x%02x,",data);
-#endif
         reset();
 	    _counter++;
 	    checkSum(data);
@@ -158,9 +183,6 @@ void UARTRead::put(unsigned char data)
         _ack.push_back(data);
         return;
     }
-#ifdef DUMP_UART_IO
-       printf("0x%02x,",data);
-#endif
 	_counter++;
     checkSum(data);
 	int CounterIndex = 0x3;
@@ -180,15 +202,16 @@ void UARTRead::put(unsigned char data)
     ///
     if(_length == _counter && 0 == _sumValue)
     {
-#ifdef DUMP_UART_IO
-       printf("\n");
-       printf("> read uart dump end\n");
-#endif
     	_ack.push_back(data);
+    	DUMP_UART_IO_READ(_ack);
     	// a whole command is done.
 		DUMP_SPEED_CHECK("recieve whole msg");
     	DUMP_VAR(typeid(fn_).name());
     	fn_(_ack);
+#if 0
+    	unique_lock<mutex> lck(gUartReadMutex);
+    	gUartWriteCV.wait(lck);
+#endif
     	return;
     }
 	DUMP_VAR_READ(_length);
