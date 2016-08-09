@@ -182,8 +182,10 @@ vsido.Connect.prototype.onOpen = function(evt) {
 * private method
 */
 vsido.Connect.prototype.wsOpenReadyCheck_ = function(self) {
-	if (self.ws && 1 == self.ws.readyState && 'function' == typeof self.onOpen) {
-		self.onOpen(self.ws);
+	if (self.ws && 1 == self.ws.readyState) {
+		if ('function' == typeof self.onOpen) {
+			self.onOpen(self.ws);
+		}
 		for (var i = 0; i < self.waitCmd.length;i++) {
 			self.send(self.waitCmd[i]);
 		}
