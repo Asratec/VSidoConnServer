@@ -352,7 +352,7 @@ void readConfig(string &port ,int &baudrate)
 void fillSystemInformation(void)
 {
     gSysInfo.linux =true;
-    string systemInfo("uname -n");
+    string systemInfo("cat /etc/vsido/name");
     auto uname = exec(systemInfo);
     FATAL_VAR(uname);
     
