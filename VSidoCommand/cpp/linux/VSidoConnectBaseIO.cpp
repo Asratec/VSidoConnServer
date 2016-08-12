@@ -201,7 +201,7 @@ static void initEnv(void)
 
 	
 	
-	string systemInfo("uname -n");
+	string systemInfo("cat /etc/vsido/name");
     auto uname = exec(systemInfo);
 	FATAL_VAR(uname);
 	if("raspberrypi\n"== uname)
@@ -300,7 +300,7 @@ static map<string,int> baudrateTable =
 
 void readConfig(string &port ,int &baudrate)
 {
-    string systemInfo("uname -n");
+    string systemInfo("cat /etc/vsido/name");
     auto uname = exec(systemInfo);
     FATAL_VAR(uname);
     
