@@ -63,7 +63,7 @@ string BindBTJSONRequest::exec()
 
 	string cmd("/opt/vsido/usr/bin/btsetup ");
 	
-	string systemInfo("uname -n");
+	string systemInfo("cat /etc/vsido/name");
     auto uname = ::execShell(systemInfo);
 	FATAL_VAR(uname);
 	if("edison\n"== uname)

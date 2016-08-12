@@ -97,7 +97,7 @@ vector<string> split(const string &str, char delim)
 */
 string ScanBTJSONRequest::exec()
 {
-	string systemInfo("uname -n");
+	string systemInfo("cat /etc/vsido/name");
     auto uname = execShell(systemInfo);
 	FATAL_VAR(uname);
 	string result;

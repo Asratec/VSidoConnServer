@@ -65,7 +65,7 @@ string ListSerialJSONRequest::exec()
 	picojson::object jsonObj;
 	jsonObj["type"] = picojson::value("ListSerialPort");
 
-	string systemInfo("uname -n");
+	string systemInfo("cat /etc/vsido/name");
     auto uname = execShell(systemInfo);
 	FATAL_VAR(uname);
 	
